@@ -88,12 +88,27 @@ private fun HomeScreen(state: CommunityState, onChat: () -> Unit, onAnnouncement
             Text("Hola, ${state.resident!!.name.substringBefore(' ')}.", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
             Text("Lo que pasa cerca, nos importa.", Modifier.padding(top = 8.dp), color = Muted)
         }
-        item { Surface(color = Ink, shape = MaterialTheme.shapes.large) { Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("UN LUGAR EN COMÚN", color = Mint, style = MaterialTheme.typography.labelMedium)
-            Text("Conversemos.\nCuidémonos.", color = Color.White, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Text("Mantente al día y encuentra a tus vecinos.", color = Mint)
-            FilledTonalButton(onClick = onChat) { Text("Ir al chat de la comunidad") }
-        } } }
+        item {
+            Surface(color = Ink, shape = MaterialTheme.shapes.large) {
+                Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Row(
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            androidx.compose.ui.res.painterResource(cl.comunidad.conectada.R.drawable.neighborloop_icon),
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp),
+                            tint = Color.Unspecified
+                        )
+                        Text("NeighborLoop", color = Mint, style = MaterialTheme.typography.labelLarge)
+                    }
+                    Text("Chat de la comunidad", color = Color.White, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                    Text("Conversa con tus vecinos.", color = Mint)
+                    FilledTonalButton(onClick = onChat) { Text("Abrir chat") }
+                }
+            }
+        }
         item { Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ActionTile("Información oficial", "Avisos de administración", Icons.Default.DateRange, Modifier.weight(1f), onAnnouncements)
             ActionTile("Solicitar ayuda", if (state.mqttConnected) "Servicio conectado" else "Servicio desconectado", Icons.Default.Warning, Modifier.weight(1f), onAlert)

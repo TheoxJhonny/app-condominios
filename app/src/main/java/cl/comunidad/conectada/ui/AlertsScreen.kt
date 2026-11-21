@@ -19,8 +19,7 @@ import cl.comunidad.conectada.domain.*
 fun AlertsScreen(state: CommunityState, model: CommunityViewModel, onAlert: () -> Unit, onNotificationPermission: () -> Unit) {
     var showConnection by remember { mutableStateOf(false) }
     LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        item { Text("Cuidarnos empieza\npor estar conectados.", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold) }
-        item { Surface(color = Color.White, shape = MaterialTheme.shapes.medium) {
+        item { Surface(color = if (state.mqttConnected) Mint else Color.White, shape = MaterialTheme.shapes.medium) {
             Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(if (state.mqttConnected) "● Servicio de alertas conectado" else if (state.mqttConnecting) "Conectando al servicio…" else "○ Servicio de alertas desconectado", fontWeight = FontWeight.SemiBold)
                 Text("Las alertas en tiempo real se reciben con la aplicación abierta y conectada.", color = Muted)
