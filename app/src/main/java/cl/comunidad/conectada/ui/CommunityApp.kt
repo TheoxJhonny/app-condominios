@@ -2,17 +2,25 @@ package cl.comunidad.conectada.ui
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.semantics.Role as AccessibilityRole
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cl.comunidad.conectada.data.*
@@ -30,21 +38,56 @@ fun CommunityApp(state: CommunityState, model: CommunityViewModel, openAlerts: B
     var detail by remember { mutableStateOf<Announcement?>(null) }
     LaunchedEffect(openAlerts, state.resident) { if (openAlerts && state.member) { tab = 3; onAlertsOpened() } }
     val labels = listOf("Inicio", "Chat", "Avisos", "Alertas", "Perfil")
-    val icons = listOf(Icons.Default.Home, Icons.Default.Email, Icons.Default.DateRange, Icons.Default.Warning, Icons.Default.Person)
-    Scaffold(containerColor = Paper,
-        topBar = { if (state.resident != null) TopAppBar(title = { Column {
-            Text("COMUNIDAD", style = MaterialTheme.typography.labelSmall, color = Muted)
-            Text(labels[tab], style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        } }, actions = { if (state.demo) Text("DEMO", Modifier.padding(20.dp), style = MaterialTheme.typography.labelMedium) }) },
-        bottomBar = { if (state.member) NavigationBar(containerColor = Color.White) {
-            labels.forEachIndexed { index, title -> NavigationBarItem(selected = tab == index,
-                onClick = { tab = index }, icon = { Icon(icons[index], contentDescription = null) },
-                label = { Text(title, style = MaterialTheme.typography.labelSmall) }) }
-        } }
+    val icons = listOf(Icons.Outlined.Home, Icons.Outlined.Email, Icons.Outlined.DateRange, Icons.Outlined.Warning, Icons.Outlined.Person)
+    Scaffold(
+        containerColor = Paper,
+        topBar = {
+            if (state.resident != null) {
+                Column {
+                    TopAppBar(
+                        title = {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                BrandMark()
+                                Text("NeighborLoop", style = MaterialTheme.typography.titleLarge)
+                            }
+                        },
+                        actions = {
+                            if (state.demo) Text("DEMO", Modifier.padding(horizontal = 20.dp), color = Cobalt, style = MaterialTheme.typography.labelMedium)
+                        }
+                    )
+                    HorizontalDivider(color = Ink)
+                }
+            }
+        },
+        bottomBar = {
+            if (state.member) {
+                Surface(color = Paper) {
+                    Column(Modifier.navigationBarsPadding()) {
+                        HorizontalDivider(color = Ink)
+                        Row(Modifier.fillMaxWidth().selectableGroup()) {
+                            labels.forEachIndexed { index, title ->
+                                val selected = tab == index
+                                val color = if (selected) Cobalt else Ink
+                                Column(
+                                    Modifier.weight(1f)
+                                        .selectable(selected, role = AccessibilityRole.Tab, onClick = { tab = index })
+                                        .heightIn(min = 60.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Box(Modifier.fillMaxWidth().height(3.dp).background(if (selected) Cobalt else Paper))
+                                    Icon(icons[index], null, Modifier.padding(top = 6.dp).size(22.dp), tint = color)
+                                    Text(title, Modifier.padding(top = 3.dp, bottom = 6.dp), color = color, style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-            state.notice?.let { notice -> Surface(color = Mint, modifier = Modifier.fillMaxWidth()) {
+            state.notice?.let { notice -> Surface(color = CobaltWash, modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(notice, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
                     IconButton(onClick = model::dismissNotice) { Icon(Icons.Default.Close, "Cerrar mensaje") }
@@ -82,51 +125,72 @@ fun CommunityApp(state: CommunityState, model: CommunityViewModel, openAlerts: B
 }
 
 @Composable
+internal fun BrandMark(modifier: Modifier = Modifier.size(24.dp)) {
+    Icon(
+        painter = androidx.compose.ui.res.painterResource(cl.comunidad.conectada.R.drawable.neighborloop_icon),
+        contentDescription = null,
+        modifier = modifier,
+        tint = Color.Unspecified
+    )
+}
+
+@Composable
 private fun HomeScreen(state: CommunityState, onChat: () -> Unit, onAnnouncements: () -> Unit, onAlert: () -> Unit, onDetail: (Announcement) -> Unit) {
-    LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+    val resident = checkNotNull(state.resident)
+    LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
-            Text("Hola, ${state.resident!!.name.substringBefore(' ')}.", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-            Text("Lo que pasa cerca, nos importa.", Modifier.padding(top = 8.dp), color = Muted)
-        }
-        item {
-            Surface(color = Ink, shape = MaterialTheme.shapes.large) {
-                Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Row(
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            androidx.compose.ui.res.painterResource(cl.comunidad.conectada.R.drawable.neighborloop_icon),
-                            contentDescription = null,
-                            modifier = Modifier.size(32.dp),
-                            tint = Color.Unspecified
-                        )
-                        Text("NeighborLoop", color = Mint, style = MaterialTheme.typography.labelLarge)
-                    }
-                    Text("Chat de la comunidad", color = Color.White, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                    Text("Conversa con tus vecinos.", color = Mint)
-                    FilledTonalButton(onClick = onChat) { Text("Abrir chat") }
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("VIVIENDA #${resident.home}", style = MaterialTheme.typography.labelMedium, color = Muted)
+                    Text("Tu condominio", style = MaterialTheme.typography.headlineLarge)
+                    Box(Modifier.width(36.dp).height(4.dp).background(Cobalt))
                 }
+                Facade(Modifier.width(70.dp).height(120.dp))
+            }
+            HorizontalDivider(Modifier.padding(top = 16.dp), color = Ink)
+        }
+        item { Text("Avisos recientes", style = MaterialTheme.typography.headlineMedium) }
+        item {
+            Column {
+                state.announcements.take(2).forEach { AnnouncementRow(it, onDetail, showPreview = false) }
+                if (state.announcements.isEmpty()) {
+                    EmptyState("Aún no hay avisos", "Aquí aparecerán las publicaciones de administración.")
+                }
+                TextButton(onClick = onAnnouncements) { Text("Ver todos los avisos") }
             }
         }
-        item { Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            ActionTile("Información oficial", "Avisos de administración", Icons.Default.DateRange, Modifier.weight(1f), onAnnouncements)
-            ActionTile("Solicitar ayuda", if (state.mqttConnected) "Servicio conectado" else "Servicio desconectado", Icons.Default.Warning, Modifier.weight(1f), onAlert)
-        } }
-        item { Text("En tu comunidad", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
-        if (state.announcements.isEmpty()) item { EmptyState("Todo tranquilo por aquí", "Los próximos avisos de administración aparecerán en este espacio.") }
-        items(state.announcements.take(2), key = { it.id }) { AnnouncementCard(it, onDetail) }
-        item { Text("Vivienda #${state.resident!!.home} · ${if (state.resident.role == Role.ADMIN) "Administrador" else "Residente"}", style = MaterialTheme.typography.labelMedium, color = Muted) }
+        item {
+            Button(onClick = onAlert, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                Text("Solicitar ayuda", Modifier.weight(1f))
+                Icon(Icons.Outlined.Warning, null)
+            }
+        }
+        item {
+            OutlinedButton(onClick = onChat, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text("Abrir chat", Modifier.weight(1f))
+                Icon(Icons.Outlined.Email, null)
+            }
+        }
     }
 }
 
 @Composable
-private fun ActionTile(title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier, onClick: () -> Unit) {
-    Card(onClick = onClick, modifier = modifier, colors = CardDefaults.cardColors(containerColor = Color.White)) {
-        Column(Modifier.padding(16.dp).heightIn(min = 130.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Icon(icon, null, tint = Ink)
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Muted)
+private fun Facade(modifier: Modifier) {
+    Canvas(modifier) {
+        drawRect(Ink)
+        val bay = size.width / 4
+        val floor = size.height / 5
+        repeat(5) { level ->
+            val y = level * floor
+            drawRect(Muted, Offset(0f, y + floor * 0.10f), Size(size.width, floor * 0.24f))
+            repeat(3) { window ->
+                val x = bay * (window + 0.6f)
+                drawRect(Paper, Offset(x, y + floor * 0.42f), Size(bay * 0.61f, floor * 0.42f))
+            }
         }
     }
 }
@@ -136,15 +200,16 @@ private fun ChatScreen(state: CommunityState, model: CommunityViewModel) {
     var text by rememberSaveable { mutableStateOf("") }
     Column(Modifier.fillMaxSize().imePadding()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("Chat general", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+            Text("Chat general", Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall)
             if (!state.demo) TextButton(onClick = model::retryFeeds) { Text("Actualizar conexión") }
         }
+        HorizontalDivider(color = Rule)
         LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp), reverseLayout = true) {
             if (state.messages.isEmpty()) item { EmptyState("La conversación empieza contigo", "Saluda o comparte algo con tus vecinos.") }
             items(state.messages.reversed(), key = { it.id }) { message ->
                 val own = message.userId == state.resident?.uid
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = if (own) Alignment.End else Alignment.Start) {
-                    Surface(color = if (own) Mint else Color.White, shape = MaterialTheme.shapes.medium, modifier = Modifier.widthIn(max = 320.dp)) {
+                    Surface(color = if (own) CobaltWash else Color.White, shape = MaterialTheme.shapes.medium, modifier = Modifier.widthIn(max = 320.dp)) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text("${message.name} · #${message.home}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                             Text(message.content)
@@ -154,7 +219,8 @@ private fun ChatScreen(state: CommunityState, model: CommunityViewModel) {
                 }
             }
         }
-        Surface(color = Color.White) { Row(Modifier.padding(12.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        HorizontalDivider(color = Rule)
+        Surface(color = Paper) { Row(Modifier.padding(12.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(value = text, onValueChange = { if (it.length <= 2000) text = it }, label = { Text("Escribe a tus vecinos") }, modifier = Modifier.weight(1f), maxLines = 4, enabled = !state.busy)
             IconButton(onClick = { model.sendMessage(text) { text = "" } }, enabled = text.isNotBlank() && !state.busy, modifier = Modifier.padding(bottom = 6.dp)) { Icon(Icons.AutoMirrored.Filled.Send, "Enviar mensaje") }
         } }
@@ -164,33 +230,43 @@ private fun ChatScreen(state: CommunityState, model: CommunityViewModel) {
 @Composable
 private fun AnnouncementsScreen(state: CommunityState, onCreate: () -> Unit, onDetail: (Announcement) -> Unit) {
     LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { Text("La información,\na tu alcance.", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold) }
-        item { Text("Novedades y avisos oficiales de administración.", color = Muted) }
+        item { Text("Avisos de administración", style = MaterialTheme.typography.headlineMedium) }
         if (state.resident?.role == Role.ADMIN && !state.demo) item { Button(onClick = onCreate) { Text("Publicar un aviso") } }
         if (state.announcements.isEmpty()) item { EmptyState("Aún no hay avisos", "Cuando administración publique información, podrás consultarla aquí.") }
-        items(state.announcements, key = { it.id }) { AnnouncementCard(it, onDetail) }
+        items(state.announcements, key = { it.id }) { AnnouncementRow(it, onDetail) }
     }
 }
 
 @Composable
-private fun AnnouncementCard(item: Announcement, onDetail: (Announcement) -> Unit) {
-    Card(onClick = { onDetail(item) }, colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("ADMINISTRACIÓN · ${formatTime(item.createdAt)}", style = MaterialTheme.typography.labelSmall, color = Muted)
-            Text(item.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            Text(item.content, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, color = Muted)
-            Text("Leer aviso →", style = MaterialTheme.typography.labelLarge)
+private fun AnnouncementRow(item: Announcement, onDetail: (Announcement) -> Unit, showPreview: Boolean = true) {
+    Row(
+        Modifier.fillMaxWidth().clickable(role = AccessibilityRole.Button) { onDetail(item) }
+            .heightIn(min = 56.dp).padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(Modifier.size(6.dp).background(Cobalt))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(item.title, style = MaterialTheme.typography.titleMedium)
+            if (showPreview) {
+                Text(formatTime(item.createdAt), style = MaterialTheme.typography.labelSmall, color = Muted)
+                Text(item.content, maxLines = 2, overflow = TextOverflow.Ellipsis, color = Muted)
+            }
         }
+        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Cobalt)
     }
+    HorizontalDivider(color = Rule)
 }
 
 @Composable
 fun EmptyState(title: String, text: String) {
-    Surface(color = Color.White, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(title, fontWeight = FontWeight.SemiBold)
+    Column(Modifier.fillMaxWidth()) {
+        HorizontalDivider(color = Rule)
+        Column(Modifier.padding(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
             Text(text, color = Muted, style = MaterialTheme.typography.bodyMedium)
         }
+        HorizontalDivider(color = Rule)
     }
 }
 

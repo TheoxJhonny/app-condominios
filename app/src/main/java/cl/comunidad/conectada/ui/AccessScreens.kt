@@ -3,8 +3,6 @@ package cl.comunidad.conectada.ui
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -40,10 +38,9 @@ fun AccessScreen(state: CommunityState, model: CommunityViewModel) {
     val errors = if (register && attempted) RegistrationValidator.validate(name, home, email, password) else emptyMap()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Spacer(Modifier.height(12.dp))
-        Surface(color = Mint, shape = MaterialTheme.shapes.medium) { Icon(Icons.Default.Home, null, Modifier.padding(16.dp).size(30.dp)) }
+        BrandMark(Modifier.size(48.dp))
         Text(androidx.compose.ui.res.stringResource(cl.comunidad.conectada.R.string.app_name), style = MaterialTheme.typography.titleMedium, color = Ink)
-        Text("Tu comunidad.\nMás cerca.", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-        Text("Un espacio para conversar, informarte y cuidarnos entre todos.", color = Muted, style = MaterialTheme.typography.bodyLarge)
+        Text(if (register) "Crea tu cuenta" else "Entra a tu comunidad", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(4.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             FilterChip(selected = !register, onClick = { register = false; attempted = false; password = "" }, label = { Text("Ingresar") }, enabled = !state.busy)
@@ -120,11 +117,11 @@ private fun SelectionContainerText(text: String) {
 fun ProfileScreen(state: CommunityState, model: CommunityViewModel, onNotifications: () -> Unit) {
     val user = state.resident!!
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        Surface(color = Ink, shape = MaterialTheme.shapes.large) {
+        Surface(color = Cobalt) {
             Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(user.name, color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Vivienda #${user.home}", color = Mint)
-                Text(if (user.role == Role.ADMIN) "Administrador" else "Residente", color = Mint, style = MaterialTheme.typography.labelMedium)
+                Text("Vivienda #${user.home}", color = CobaltWash)
+                Text(if (user.role == Role.ADMIN) "Administrador" else "Residente", color = CobaltWash, style = MaterialTheme.typography.labelMedium)
             }
         }
         Text("Así te ven tus vecinos", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
