@@ -29,6 +29,7 @@ fun AccessScreen(state: CommunityState, model: CommunityViewModel) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Spacer(Modifier.height(12.dp))
         Surface(color = Mint, shape = MaterialTheme.shapes.medium) { Icon(Icons.Default.Home, null, Modifier.padding(16.dp).size(30.dp)) }
+        Text(androidx.compose.ui.res.stringResource(cl.comunidad.conectada.R.string.app_name), style = MaterialTheme.typography.titleMedium, color = Ink)
         Text("Tu comunidad.\nMás cerca.", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
         Text("Un espacio para conversar, informarte y cuidarnos entre todos.", color = Muted, style = MaterialTheme.typography.bodyLarge)
         Spacer(Modifier.height(4.dp))

@@ -1,4 +1,4 @@
-# Comunidad Conectada
+# NeighborLoop
 
 Aplicación Android de Jonathan Fuentealba para residentes y administradores de una comunidad. Kotlin + Jetpack Compose; Firebase Authentication, Realtime Database, FCM y MQTT.
 
