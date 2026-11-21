@@ -30,6 +30,8 @@ Por cada ejecución guardar fecha, dispositivos/API, versión/commit, condicione
 
 `CommunityTest` contiene siete casos de dominio. Ejecutar con `./gradlew.bat testDebugUnitTest`. Las pruebas unitarias no prueban Firebase, broker, notificaciones ni permisos.
 
+El 21-11-2026 se compilaron directamente `Community.kt` y `CommunityTest.kt` con el compilador Kotlin 2.3.0 disponible y JDK JetBrains 25, target JVM 17; se ejecutó JUnitCore 4.13.2: **OK (7 tests)**. Este resultado valida exclusivamente el dominio y no equivale a ejecutar `testDebugUnitTest` con el toolchain Android del proyecto. Cubre campos vacíos, vivienda 311A, UUID/identidad, duplicados, límite de caché, rechazo de comodines y tópico de comunidad.
+
 ## Restricciones encontradas el 21-11-2026
 
 - Inicio de Gradle con caché por defecto: fallo al cargar biblioteca nativa en directorio no escribible.

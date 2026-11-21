@@ -10,7 +10,7 @@ No es todavía una entrega funcional para evaluación. No usar como sistema de e
 
 ## Abrir en Android Studio
 
-1. Abrir esta carpeta como proyecto, con SDK Android 36 y JDK compatible con Android Gradle Plugin 9.1.1. El proyecto usa Kotlin integrado de AGP y el plugin Compose 2.3.0.
+1. Abrir esta carpeta como proyecto, con SDK Android 36 y JDK compatible con Android Gradle Plugin 9.1.1. El proyecto usa Kotlin integrado de AGP y el plugin Compose 2.2.10, alineado con Kotlin de AGP.
 2. Sincronizar Gradle. La primera ejecución requiere Internet.
 3. Ejecutar `./gradlew testDebugUnitTest assembleDebug` (Windows: `./gradlew.bat testDebugUnitTest assembleDebug`).
 4. Ejecutar en emulador o teléfono Android 8.0/API 26 o superior.
