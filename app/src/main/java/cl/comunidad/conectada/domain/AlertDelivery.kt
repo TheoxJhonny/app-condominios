@@ -9,4 +9,5 @@ sealed interface AlertDelivery {
     data class Failed(val alert: CommunityAlert, val brokerAcknowledged: Boolean) : AlertDelivery
 }
 
-fun AlertDelivery.canStartAnother(): Boolean = this is AlertDelivery.Idle || this is AlertDelivery.Sent
+fun AlertDelivery.canStartAnother(): Boolean =
+    this is AlertDelivery.Idle || this is AlertDelivery.Sent

@@ -16,7 +16,11 @@ import cl.comunidad.conectada.ui.*
 class MainActivity : ComponentActivity() {
     private val model: CommunityViewModel by viewModels()
     private var openAlerts by mutableStateOf(false)
-    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { model.notifyPermission(it) }
+    private val notificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            model.notifyPermission(it)
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -24,7 +28,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             val state by model.state.collectAsStateWithLifecycle()
             CommunityTheme {
-                CommunityApp(state, model, openAlerts, onAlertsOpened = { openAlerts = false },
+                CommunityApp(
+                    state, model, openAlerts, onAlertsOpened = { openAlerts = false },
                     onNotificationPermission = {
                         if (Build.VERSION.SDK_INT >= 33) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                         else model.notifyPermission(true)
@@ -32,11 +37,18 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         openAlerts = intent.getBooleanExtra("openAlerts", false)
     }
-    override fun onStart() { super.onStart(); model.setForeground(true) }
-    override fun onStop() { model.setForeground(false); super.onStop() }
+
+    override fun onStart() {
+        super.onStart(); model.setForeground(true)
+    }
+
+    override fun onStop() {
+        model.setForeground(false); super.onStop()
+    }
 }

@@ -23,6 +23,7 @@ data class CommunityState(
     val notice: String? = null,
     val mqttConnected: Boolean = false,
     val mqttConnecting: Boolean = false,
+    val mqttConfigured: Boolean = false,
     val incoming: CommunityAlert? = null,
     val delivery: AlertDelivery = AlertDelivery.Idle
 ) {
@@ -37,6 +38,9 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
     private val mutable = MutableStateFlow(CommunityState(configured = repository != null))
     val state: StateFlow<CommunityState> = mutable.asStateFlow()
     private val feeds = mutableListOf<Job>()
+    private class MqttCredentials(val host: String, val username: String, val password: CharArray)
+
+    private var mqttCredentials: MqttCredentials? = null
     private var mqtt: MqttAlertClient? = null
     private var connectionGeneration = 0
     private var foreground = false
@@ -45,6 +49,12 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
     init { if (repository?.hasSession == true) refreshSession() }
 
     fun dismissNotice() { mutable.update { it.copy(notice = null) } }
+    fun signInWithGoogle(requestToken: suspend () -> String?) = operation {
+        val repo = requireRepository()
+        val idToken = requestToken() ?: return@operation
+        repo.signInWithGoogle(idToken)
+        loadSession(repo)
+    }
     fun dismissIncoming() { mutable.update { it.copy(incoming = null) } }
     fun notifyPermission(granted: Boolean) { notice(if (granted) "Notificaciones habilitadas." else "Puedes consultar las alertas dentro de la aplicación. Las notificaciones están desactivadas.") }
 
@@ -121,7 +131,13 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
     }
     fun setForeground(active: Boolean) {
         foreground = active
-        if (active) startFeeds() else { stopFeeds(); disconnectMqtt() }
+        if (active) {
+            startFeeds()
+            reconnectMqtt()
+        } else {
+            stopFeeds()
+            closeMqttConnection()
+        }
     }
     fun retryFeeds() { stopFeeds(); startFeeds() }
     private fun startFeeds() {
@@ -139,10 +155,20 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
         if (state.value.demo) { notice("El modo demostración no se conecta a servicios externos."); return }
         if (!state.value.member || !foreground || state.value.mqttConnecting) return
         disconnectMqtt()
+        mqttCredentials = MqttCredentials(host.trim(), username.trim(), password.toCharArray())
+        mutable.update { it.copy(mqttConfigured = true) }
+        reconnectMqtt()
+    }
+
+    fun reconnectMqtt() {
+        val credentials = mqttCredentials ?: return
+        val current = state.value
+        if (!foreground || !current.member || current.demo || current.mqttConnected || current.mqttConnecting) return
+        closeMqttConnection()
         val generation = connectionGeneration
         mutable.update { it.copy(mqttConnecting = true) }
         runCatching {
-            mqtt = MqttAlertClient(host.trim(), state.value.resident!!.communityId,
+            mqtt = MqttAlertClient(credentials.host, current.resident!!.communityId,
                 onConnection = { connected -> viewModelScope.launch { if (generation == connectionGeneration) mutable.update { it.copy(mqttConnected = connected, mqttConnecting = false) } } },
                 onAlert = { alert -> viewModelScope.launch {
                     val user = state.value.resident
@@ -160,10 +186,17 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
                     if (delivery is AlertDelivery.Publishing) mutable.update { it.copy(delivery = AlertDelivery.Failed(delivery.alert, false)) }
                     notice("No se completó la operación MQTT. Comprueba host, credenciales y conexión.")
                 } } }
-            ).also { it.connect(username.trim(), password.toCharArray()) }
+            ).also { it.connect(credentials.username, credentials.password) }
         }.onFailure { mutable.update { it.copy(mqttConnecting = false) }; notice("Revisa el host y los datos de conexión MQTT.") }
     }
     fun disconnectMqtt() {
+        mqttCredentials?.password?.fill('\u0000')
+        mqttCredentials = null
+        mutable.update { it.copy(mqttConfigured = false) }
+        closeMqttConnection()
+    }
+
+    private fun closeMqttConnection() {
         connectionGeneration++
         val previous = mqtt; mqtt = null
         mutable.update { current -> current.copy(mqttConnected = false, mqttConnecting = false,
@@ -222,6 +255,8 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
     private fun notice(text: String) { mutable.update { it.copy(notice = text) } }
     private fun requireRepository() = repository ?: error("Firebase aún no está configurado.")
     override fun onCleared() {
+        mqttCredentials?.password?.fill('\u0000')
+        mqttCredentials = null
         connectionGeneration++; stopFeeds()
         // Lifecycle-independent cleanup; no callback can mutate a disposed session.
         mqtt?.let { client -> Thread { client.close() }.start() }

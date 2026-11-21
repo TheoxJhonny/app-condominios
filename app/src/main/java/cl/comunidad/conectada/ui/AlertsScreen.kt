@@ -24,8 +24,25 @@ fun AlertsScreen(state: CommunityState, model: CommunityViewModel, onAlert: () -
             Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(if (state.mqttConnected) "● Servicio de alertas conectado" else if (state.mqttConnecting) "Conectando al servicio…" else "○ Servicio de alertas desconectado", fontWeight = FontWeight.SemiBold)
                 Text("Las alertas en tiempo real se reciben con la aplicación abierta y conectada.", color = Muted)
-                OutlinedButton(onClick = { if (state.mqttConnected || state.mqttConnecting) model.disconnectMqtt() else showConnection = true }, enabled = !state.demo) {
-                    Text(if (state.mqttConnected || state.mqttConnecting) "Desconectar" else "Conectar servicio")
+                val connectedOrConnecting = state.mqttConnected || state.mqttConnecting
+                OutlinedButton(
+                    onClick = {
+                        when {
+                            connectedOrConnecting -> model.disconnectMqtt()
+                            state.mqttConfigured -> model.reconnectMqtt()
+                            else -> showConnection = true
+                        }
+                    },
+                    enabled = !state.demo
+                ) {
+                    Text(when {
+                        connectedOrConnecting -> "Desconectar"
+                        state.mqttConfigured -> "Reconectar servicio"
+                        else -> "Conectar servicio"
+                    })
+                }
+                if (state.mqttConfigured && !connectedOrConnecting) {
+                    TextButton(onClick = { showConnection = true }) { Text("Cambiar credenciales") }
                 }
             }
         } }
@@ -71,7 +88,7 @@ private fun ConnectionDialog(onDismiss: () -> Unit, onConnect: (String, String, 
     var password by remember { mutableStateOf("") }
     AlertDialog(onDismissRequest = onDismiss, title = { Text("Conectar alertas") }, text = {
         Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Usa las credenciales asignadas por administración. Conexión segura TLS; los datos no se guardan en el dispositivo.", style = MaterialTheme.typography.bodySmall)
+            Text("Usa las credenciales asignadas por administración. Conexión segura TLS. Las credenciales se conservan en memoria durante esta sesión.", style = MaterialTheme.typography.bodySmall)
             OutlinedTextField(host, { host = it }, label = { Text("Host del broker") }, placeholder = { Text("broker.ejemplo.cl") }, singleLine = true)
             OutlinedTextField(username, { username = it }, label = { Text("Usuario") }, singleLine = true)
             OutlinedTextField(password, { password = it }, label = { Text("Contraseña") }, singleLine = true, visualTransformation = PasswordVisualTransformation())

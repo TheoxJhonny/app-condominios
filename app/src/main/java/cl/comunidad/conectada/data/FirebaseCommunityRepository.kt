@@ -2,6 +2,7 @@ package cl.comunidad.conectada.data
 
 import cl.comunidad.conectada.domain.*
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -59,6 +60,10 @@ class FirebaseCommunityRepository(
 
     suspend fun signIn(email: String, password: String) {
         auth.signInWithEmailAndPassword(email.trim(), password).await()
+    }
+
+    suspend fun signInWithGoogle(idToken: String) {
+        auth.signInWithCredential(GoogleAuthProvider.getCredential(idToken, null)).await()
     }
 
     suspend fun register(name: String, home: String, email: String, password: String) {
@@ -137,18 +142,29 @@ class FirebaseCommunityRepository(
         )
         // Preserve original timestamp and administrator status when retrying the same event.
         suspendCancellableCoroutine<Unit> { continuation ->
-            community(alert.communityId).child("alerts").child(alert.id).runTransaction(object : Transaction.Handler {
-                override fun doTransaction(current: MutableData): Transaction.Result {
-                    if (current.value == null) current.value = payload
-                    else if (current.child("userId").value != alert.userId || current.child("communityId").value != alert.communityId) return Transaction.abort()
-                    return Transaction.success(current)
-                }
-                override fun onComplete(error: DatabaseError?, committed: Boolean, currentData: DataSnapshot?) {
-                    if (!continuation.isActive) return
-                    continuation.resumeWith(if (error == null && committed) Result.success(Unit)
-                        else Result.failure(error?.toException() ?: IllegalStateException("No se pudo registrar la alerta.")))
-                }
-            }, false)
+            community(alert.communityId).child("alerts").child(alert.id)
+                .runTransaction(object : Transaction.Handler {
+                    override fun doTransaction(current: MutableData): Transaction.Result {
+                        if (current.value == null) current.value = payload
+                        else if (current.child("userId").value != alert.userId || current.child("communityId").value != alert.communityId) return Transaction.abort()
+                        return Transaction.success(current)
+                    }
+
+                    override fun onComplete(
+                        error: DatabaseError?,
+                        committed: Boolean,
+                        currentData: DataSnapshot?
+                    ) {
+                        if (!continuation.isActive) return
+                        continuation.resumeWith(
+                            if (error == null && committed) Result.success(Unit)
+                            else Result.failure(
+                                error?.toException()
+                                    ?: IllegalStateException("No se pudo registrar la alerta.")
+                            )
+                        )
+                    }
+                }, false)
         }
     }
 

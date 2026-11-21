@@ -26,6 +26,20 @@ Android Studio pudo sincronizar y ejecutar Gradle. La primera compilación detec
 
 En el emulador Pixel 8 API 37.1 se verificó el arranque, el acceso a la demostración y la navegación de Inicio a Chat con mensajes de ejemplo. No existen aún pruebas reales Firebase/MQTT/FCM ni resultados de usabilidad con participantes.
 
+## Acceso con Google
+
+El botón de acceso utiliza Credential Manager y Firebase Authentication. Se muestra cuando Firebase está configurado y Gradle genera el recurso `default_web_client_id` a partir de `app/google-services.json`. La cuenta de Google pasa por el flujo existente para completar el perfil y comprobar pertenencia.
+
+El archivo local de NeighborLoop contiene la configuración OAuth, pero todavía no incluye `firebase_url`. Crear Realtime Database, publicar las reglas del proyecto y descargar de nuevo la configuración permitirá probar la carga y el guardado del perfil desde el emulador.
+
+## Verificación en teléfono y acceso de prueba
+
+Jonathan confirmó en un teléfono físico el inicio de sesión con Google y la persistencia del perfil tras volver a abrir la app. La configuración local ya incorpora la URL de Realtime Database.
+
+Desde una terminal administrativa con Firebase Admin SDK para Python y credenciales de aplicación autorizadas para `neighborloop-b915b`, ejecuta `python firebase/admit_resident.py UID` para ver la operación. Añade `--apply` para asignar la cuenta a `comunidad01` como residente. Copia el UID desde Firebase Authentication. Después pulsa **Comprobar mi acceso** en la app para refrescar el token. El script no solicita ni guarda claves y rechaza cuentas deshabilitadas, administradores y miembros de otra comunidad.
+
+La cuenta de prueba fue admitida en `comunidad01` como residente. Jonathan confirmó que el chat en tiempo real funcionó entre el teléfono físico y el emulador con cuentas distintas de la misma comunidad.
+
 ## Próximo trabajo
 
 1. Crear Firebase, activar correo/contraseña, RTDB y registrar Android. Añadir google-services.json y URL regional si se necesita.
@@ -34,3 +48,15 @@ En el emulador Pixel 8 API 37.1 se verificó el arranque, el acceso a la demostr
 4. Implementar FCM de anuncios y backend emisor seguro; no colocar credenciales Admin SDK en la app.
 5. Añadir recuperación de envío pendiente tras muerte del proceso y limpieza de receipts de cuentas retiradas. El estado de publicación/registro pendiente actual vive en el ViewModel y se pierde al cerrar el proceso.
 6. Revisar Excel y cerrar alcance de compraventa. Mantener Google como extra opcional.
+
+### Reconexión del servicio de alertas
+
+Las credenciales MQTT introducidas en Alertas se mantienen en memoria durante la sesión. Al pasar la app a segundo plano se cierra la conexión y, al volver, se intenta restablecer automáticamente. El botón **Reconectar servicio** permite reintentar con las mismas credenciales. Desconectar manualmente o cerrar sesión descarta las credenciales.
+
+Para verificarlo, envía dos alertas seguidas con ambos dispositivos conectados. Luego lleva la app receptora a segundo plano, vuelve a abrirla y verifica que se reconecte sin pedir las credenciales. Envía otra alerta y comprueba el aviso en vivo y su registro en el historial.
+
+### Pruebas manuales de integración
+
+El 21 de noviembre de 2026 se verificaron el acceso con Google, la persistencia del perfil y el chat en tiempo real entre un teléfono Android y un emulador con cuentas distintas de `comunidad01`. Con EMQX Serverless sobre TLS, se observó la recepción de una alerta en vivo y su registro como Activa en Firebase. Tras corregir la reconexión, se enviaron dos alertas seguidas con ambos clientes conectados y se verificó que la app restablece MQTT al volver del segundo plano sin volver a escribir la contraseña.
+
+Pendiente de prueba manual: enviar una alerta como residente, marcarla como Atendida y luego Cerrada como administrador, y comprobar que ambos dispositivos actualicen el mismo registro.

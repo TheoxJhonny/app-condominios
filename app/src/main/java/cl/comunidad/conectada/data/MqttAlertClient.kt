@@ -51,7 +51,12 @@ class MqttAlertClient(
                         data.getLong("createdAt")
                     )
                     require(data.getString("status") == "ACTIVE")
-                    if (!AlertEventValidator.accepts(alert, communityId, System.currentTimeMillis())) return
+                    if (!AlertEventValidator.accepts(
+                            alert,
+                            communityId,
+                            System.currentTimeMillis()
+                        )
+                    ) return
                     if (deduplicator.accept(alert.id)) onAlert(alert)
                 }.onFailure(onError)
             }
@@ -95,15 +100,15 @@ class MqttAlertClient(
                 1,
                 false,
                 null,
-                listener(onAcknowledged)
+                listener(onAcknowledged, affectsConnection = false)
             )
         }.onFailure(onError)
     }
 
-    private fun listener(success: () -> Unit) = object : IMqttActionListener {
+    private fun listener(success: () -> Unit, affectsConnection: Boolean = true) = object : IMqttActionListener {
         override fun onSuccess(asyncActionToken: IMqttToken?) = success()
         override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
-            onConnection(false)
+            if (affectsConnection) onConnection(false)
             onError(exception ?: IllegalStateException("Operación MQTT fallida."))
         }
     }

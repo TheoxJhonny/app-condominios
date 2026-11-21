@@ -9,6 +9,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -19,6 +26,11 @@ import cl.comunidad.conectada.domain.Role
 
 @Composable
 fun AccessScreen(state: CommunityState, model: CommunityViewModel) {
+    val context = LocalContext.current
+    val googleClientId = remember(context) {
+        val id = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
+        if (id == 0) null else context.getString(id).takeIf { it.isNotBlank() }
+    }
     var register by rememberSaveable { mutableStateOf(false) }
     var name by rememberSaveable { mutableStateOf("") }
     var home by rememberSaveable { mutableStateOf("") }
@@ -57,6 +69,27 @@ fun AccessScreen(state: CommunityState, model: CommunityViewModel) {
             Text(if (register) "Crear mi cuenta" else "Entrar a mi comunidad")
         }
         if (!register && state.configured) TextButton(onClick = { model.resetPassword(email) }, enabled = !state.busy) { Text("Olvidé mi contraseña") }
+        if (state.configured && googleClientId != null) {
+            OutlinedButton(
+                onClick = {
+                    model.signInWithGoogle {
+                        val option = GetSignInWithGoogleOption.Builder(googleClientId).build()
+                        val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
+                        try {
+                            val credential = CredentialManager.create(context).getCredential(context, request).credential
+                            require(credential is CustomCredential &&
+                                credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                            ) { "No se recibió una cuenta de Google válida." }
+                            GoogleIdTokenCredential.createFrom(credential.data).idToken
+                        } catch (_: GetCredentialCancellationException) {
+                            null
+                        }
+                    }
+                },
+                enabled = !state.busy,
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Continuar con Google") }
+        }
         if (!state.configured) EmptyState("Estamos preparando tu comunidad", "La conexión de cuentas todavía no está configurada. Puedes explorar la aplicación con datos de ejemplo.")
         OutlinedButton(onClick = model::enterDemo, enabled = !state.busy, modifier = Modifier.fillMaxWidth()) { Text("Explorar demostración") }
         Text("Tu vivienda puede tener varios residentes. Cada persona utiliza su propia cuenta.", style = MaterialTheme.typography.bodySmall, color = Muted)

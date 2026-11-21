@@ -66,6 +66,7 @@ class AlertDeduplicator(private val capacity: Int = 512) {
     }
 
     private val seen = LinkedHashSet<String>()
+
     @Synchronized
     fun accept(id: String): Boolean {
         if (id.isBlank() || !seen.add(id)) return false
