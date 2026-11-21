@@ -1,53 +1,30 @@
 # Arquitectura y comunicación
 
-## Responsabilidades
-
 | Componente | Responsabilidad |
 |---|---|
-| Compose | Pantallas, estados y confirmación de alarma |
-| ViewModel / casos de uso (pendientes) | Sesión, carga, reintentos, coordinación de envío e historial |
-| Firebase Auth | Correo/contraseña, UID, recuperación y sesión |
-| Realtime Database | Perfiles, chat, anuncios e historial de alertas |
-| Backend confiable (pendiente) | Envío FCM y asignación controlada de pertenencia/rol |
-| Broker MQTT | Distribución de eventos a clientes conectados según ACL |
-| Transporte MQTT | TLS, QoS 1, suscripción, reconexión y deduplicación de sesión |
+| Jetpack Compose | Navegación, formularios, estados y confirmación de alertas |
+| CommunityViewModel | Sesión, suscripciones de datos y coordinación de alertas |
+| Firebase Authentication | Identidad, acceso por correo o Google y recuperación |
+| Realtime Database | Perfiles, chat, avisos e historial |
+| Cliente Paho y broker MQTT | Envío y recepción en vivo por comunidad mediante TLS |
+| Android | Notificaciones locales de alertas y apertura de la pantalla Alertas |
+| Emisor FCM | Notificación de avisos. Pendiente |
 
-El proyecto tiene paquetes `domain` y `data`. La UI inicial todavía no consume los adaptadores. Agregar ViewModels y repositorios observables antes de conectar pantallas; no llamar a los SDK directamente desde composables.
+## Datos y pertenencia
 
-## Dos dispositivos
+- `profiles/{uid}` guarda nombre y vivienda. El UID identifica la cuenta y una vivienda puede agrupar a varios residentes.
+- `communities/{communityId}/messages/{id}` guarda el chat.
+- `communities/{communityId}/announcements/{id}` guarda los avisos.
+- `communities/{communityId}/alerts/{id}` guarda el historial y estado de las alertas.
 
-Ambos teléfonos instalan la misma app y usan cuentas distintas. Al pertenecer a la misma comunidad, consultan la misma ruta en Firebase. Un listener recibe los cambios del otro teléfono sin actualizar manualmente.
+La app obtiene la pertenencia y el rol de los claims `communityId` y `admin`. Una cuenta puede completar su perfil antes de recibir acceso a su comunidad. **Comprobar mi acceso** refresca el token. Las reglas de RTDB y los permisos del broker se administran por separado.
 
-En MQTT ambos se conectan al mismo broker con identificadores de cliente diferentes. Se suscriben, por ejemplo, a `comunidades/comunidad01/alertas`. Cuando A publica, el broker distribuye el evento a A y B. No es una conexión directa entre teléfonos; pueden estar en redes distintas si el broker es accesible por Internet.
+## Alertas
 
-TLS protege el transporte y el broker debe verificar credenciales y ACL. El nombre del tópico por sí solo no impide que otra comunidad se suscriba. El broker tampoco reconoce automáticamente la sesión Firebase: hay que configurar la identidad y permisos MQTT por separado.
+1. La persona confirma la solicitud de ayuda. La app asigna un UUID que reutiliza en reintentos.
+2. El cliente publica en `comunidades/{communityId}/alertas` con QoS 1 y sin retención.
+3. Tras el acuse del broker, la app registra el evento en Firebase con el mismo ID. El acuse confirma la publicación al broker. La recepción en cada dispositivo depende de su conexión.
+4. Los receptores validan antigüedad, comunidad, tamaño y duplicados. Si Android tiene permiso, se muestra una notificación local.
+5. Un administrador puede cambiar el estado del registro a Atendida o Cerrada.
 
-## Datos propuestos
-
-```text
-profiles/{uid}: name, home
-communities/{communityId}/messages/{id}: userId, name, home, content, createdAt
-communities/{communityId}/announcements/{id}: userId, title, content, createdAt
-communities/{communityId}/alerts/{id}: communityId, userId, name, home, createdAt, status
-```
-
-Claims controlados mediante Admin SDK: `communityId` y `admin`. El cliente no escribe roles. Tras crear cuenta, puede completar perfil, pero no acceder a la comunidad hasta recibir pertenencia controlada. Implementar una pantalla de aprobación pendiente. Los claims requieren refrescar el token tras su asignación.
-
-## Alarma: coordinación pendiente
-
-1. Solicitar confirmación y bloquear pulsaciones repetidas durante el envío.
-2. Crear un UUID una sola vez. Mantener el mismo ID en reintentos.
-3. Si MQTT no está listo, mostrar sin enviar, nunca éxito.
-4. Publicar con QoS 1 y `retain=false`.
-5. Tras PUBACK, mostrar publicada al broker. PUBACK no prueba recepción humana ni entrega a todos los teléfonos.
-6. Guardar el historial en Firebase con el mismo ID. Si falla, mostrar enviada pero pendiente de registro y reintentar solo el registro. Firebase y MQTT no forman una transacción atómica.
-7. Receptores validan comunidad, payload y duplicados; muestran aviso y notificación local según permisos.
-8. Solo el administrador modifica estado a atendida/cerrada; no genera una alarma nueva.
-
-El adaptador actual deduplica hasta 512 IDs en memoria y rechaza mensajes retained. Falta deduplicación persistente con caducidad, validación de antigüedad y protección contra reproducción. La identidad incluida en un payload MQTT no es prueba criptográfica de autoría: para mayor seguridad se necesita autenticación por usuario y validación/sellado por backend.
-
-## FCM y Android
-
-Anuncio en Database → backend confiable → FCM dirigido a tokens de miembros autorizados → notificación → anuncio por ID, verificando acceso de nuevo. No incluir credenciales Admin SDK en Android. Usar un tópico FCM público predecible no garantiza privacidad entre comunidades.
-
-El transporte MQTT propuesto es para primer plano. Android puede suspender o cerrar procesos. No se implementará un servicio permanente sin justificarlo. Registrar resultados con app abierta, en segundo plano y cerrada. Si más adelante se añade FCM de respaldo para alarmas, conservar MQTT y deduplicar ambos canales por el mismo ID.
+Al pasar a segundo plano se cierran los listeners de datos y MQTT. Al volver se restablecen las suscripciones y se intenta reconectar con las credenciales de la sesión. El envío pendiente se conserva en memoria del ViewModel.

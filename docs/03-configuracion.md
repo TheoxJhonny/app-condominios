@@ -1,54 +1,22 @@
-# Configuración y seguridad
-
-Estado: instrucciones para el siguiente paso; servicios aún no creados.
+# Configuración de Firebase y MQTT
 
 ## Firebase
 
-1. Crear un proyecto en la consola Firebase de la cuenta del propietario. Registrar Android con package `cl.comunidad.conectada`.
-2. Activar Authentication por correo y contraseña.
-3. Crear **Realtime Database**, no sustituirla por Firestore. Mantener acceso denegado inicialmente.
-4. Descargar `google-services.json` a `app/` (ignorado por Git). Añadir el plugin Google Services compatible en raíz/módulo y sincronizar. Aún no se añadió para que la base no dependa de un archivo inexistente.
-5. Inicializar los adaptadores después de confirmar FirebaseApp. Usar `FirebaseDatabase.getInstance(URL_REAL_DE_LA_BASE)` si corresponde por región.
-6. Crear dos cuentas de prueba y un administrador. Desde entorno confiable con Admin SDK, asignar claims de comunidad y administrador; nunca desde la app ni mediante registro libre.
-7. Probar `firebase/database.rules.json` en Emulator Suite. Son una propuesta sin validar, no reglas certificadas. No desplegar antes de ejecutar pruebas positivas y negativas.
-8. Implementar FCM Android, permisos API 33+, canales, actualización de token y apertura por ID. Añadir backend que observe creación de anuncios y envíe FCM a miembros autorizados.
+El entorno de pruebas usa el proyecto `neighborloop-b915b`. Para preparar una instalación de desarrollo:
 
-Si Auth crea cuenta pero falla escritura de perfil, la pantalla deberá permitir completar el perfil al reingresar. No tratar el registro Auth como una operación atómica con Database.
+1. Obtener `google-services.json` para la app Android `cl.comunidad.conectada` y colocarlo en `app/`. El archivo debe incluir la URL de Realtime Database. Gradle aplica Google Services al detectar el archivo.
+2. Habilitar los proveedores de Authentication que se usarán. Para Google, verificar la huella de la firma del APK y el recurso generado `default_web_client_id`.
+3. Usar Realtime Database con las reglas de `firebase/database.rules.json`. La revisión de permisos en Emulator Suite está pendiente.
+4. Para admitir a un residente, ejecutar `python firebase/admit_resident.py UID` desde un entorno autorizado con Firebase Admin SDK y credenciales de aplicación. Agregar `--apply` para asignar `comunidad01`. En el teléfono, pulsar **Comprobar mi acceso** para refrescar la sesión.
 
-Antes de elegir Cloud Functions u otro alojamiento, revisar requisitos de facturación y cuotas con el propietario. No activar pagos automáticamente. El envío manual de una notificación desde consola no reemplaza la integración anuncio → backend → FCM.
+## MQTT
 
-## Broker MQTT
+Las pruebas manuales utilizaron EMQX Serverless por TLS en el puerto 8883. En **Alertas**, introducir host, usuario y contraseña. El broker debe restringir publicación y suscripción al tópico de la comunidad correspondiente. Al desconectar manualmente o cerrar sesión, la app descarta las credenciales de sesión. Mantener credenciales administrativas y del broker fuera del repositorio.
 
-Elegir un broker administrado privado con TLS y ACL, o Mosquitto propio con certificado válido. Falta escoger proveedor y verificar condiciones actuales. No usar un broker público anónimo para identidades reales.
+## FCM
 
-- Host DNS válido y puerto TLS 8883 para el cliente preparado.
-- Una credencial por dispositivo/usuario de prueba; no una contraseña global en el APK.
-- ACL que permita publicar/suscribirse únicamente al tópico exacto de su comunidad.
-- TLS con CA confiable y verificación del nombre del servidor; no aceptar todos los certificados.
-- QoS 1 y eventos sin retain. Historial en Database.
-- Provisionamiento seguro de credenciales pendiente; el adaptador solo las recibe en memoria. Paho puede conservarlas para reconectar durante la sesión. No persistirlas como texto plano.
-- Restricciones de tamaño, frecuencia y clientes en broker. Probar rechazo de acceso entre comunidades.
+La publicación de avisos todavía carece de emisor FCM. La integración requiere un backend autorizado, registro de tokens por miembro y apertura del aviso por ID con verificación de acceso.
 
-Cerrar el cliente fuera del hilo principal al terminar la sesión; recoger Flow de Firebase con lifecycle y cancelarlo al salir. La reconexión automática restaura suscripción después de una conexión ya establecida; falta estrategia explícita para reintentar el primer intento fallido y una suscripción rechazada.
+## Repositorio
 
-## GitHub
-
-Ya existe un repositorio local en `main`. Falta un repositorio remoto en la cuenta del propietario y autenticación GitHub. Recomendada visibilidad privada mientras se prepara la evaluación.
-
-Cuando exista un remoto vacío:
-
-```bash
-git remote add origin URL_DEL_REPOSITORIO
-git push -u origin main
-```
-
-No se ha ejecutado push ni creado un repositorio remoto. El propietario aún no tiene uno. El plugin GitHub está disponible para conectar, pero no está instalado en esta sesión. Nunca guardar tokens en la URL del remoto ni en documentación.
-
-## Fuentes primarias
-
-- https://firebase.google.com/docs/android/setup
-- https://firebase.google.com/docs/database/android/start
-- https://firebase.google.com/docs/database/security
-- https://firebase.google.com/docs/cloud-messaging/send/admin-sdk
-- https://eclipse.dev/paho/clients/java/index.html
-- https://eclipse.dev/paho/files/javadoc/org/eclipse/paho/client/mqttv3/MqttAsyncClient.html
+El remoto `origin` corresponde a [app-condominios](https://github.com/TheoxJhonny/app-condominios). La rama principal es `main`.

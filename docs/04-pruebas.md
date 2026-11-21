@@ -1,18 +1,22 @@
-# Pruebas y evidencia
+# Pruebas y resultados
 
-No presentar un test escrito como si estuviera ejecutado. No incluir capturas simuladas como evidencia.
+## Resultados registrados
 
-## Casos de aceptación pendientes
+- Android Studio ejecutó `:app:testDebugUnitTest :app:assembleDebug` con resultado exitoso. Los informes de JUnit registran 14 pruebas unitarias aprobadas, siete de `CommunityTest` y siete de `AlertEventValidatorTest`.
+- El 21 de noviembre de 2026 se verificaron el arranque y la demostración en emulador, el acceso con Google, la persistencia del perfil, el chat entre teléfono y emulador y la recepción, registro y reconexión de alertas con EMQX Serverless.
+- El rediseño se comprobó mediante compilación directa de Kotlin. La revisión del carrusel y del diseño en dispositivo sigue pendiente.
+
+## Matriz de aceptación
 
 | ID | Condiciones y pasos | Esperado | Estado |
 |---|---|---|---|
-| REG-01 | Registro con todos los campos vacíos | Errores; no crear cuenta | Unidad implementada; UI pendiente |
-| REG-02 | Registro con vivienda 311A | Aceptar; conservar vivienda | Unidad implementada; Firebase pendiente |
-| CHAT-01 | Dos usuarios en dos dispositivos; A envía | B recibe nombre, vivienda, contenido y fecha | Pendiente |
+| REG-01 | Registro con todos los campos vacíos | Errores; no crear cuenta | Validación implementada; prueba manual pendiente |
+| REG-02 | Registro con vivienda 311A | Aceptar; conservar vivienda | Unidad aprobada; registro real pendiente |
+| CHAT-01 | Dos usuarios en dos dispositivos; A envía | B recibe nombre, vivienda, contenido y fecha | Verificado entre teléfono y emulador |
 | SEC-01 | Vecino escribe directamente un anuncio con SDK/REST | Reglas rechazan | Pendiente |
 | SEC-02 | Vecino intenta escribir rol o leer otra comunidad | Reglas rechazan | Pendiente |
 | FCM-01 | Admin publica; B recibe y toca aviso | Abrir anuncio correcto | Pendiente |
-| MQTT-01 | Dos clientes; A confirma alarma | B recibe identidad y vivienda | Pendiente |
+| MQTT-01 | Dos clientes; A confirma alarma | B recibe identidad y vivienda | Recepción verificada entre dos dispositivos |
 | MQTT-02 | Repetir mismo UUID | Un solo aviso por ID | Unidad inicial implementada; integración pendiente |
 | MQTT-03 | Desactivar red antes de publicar | Estado sin enviar | Pendiente |
 | MQTT-04 | Cortar/restaurar red y publicar otro evento | Recuperar suscripción sin duplicación | Pendiente |
@@ -23,18 +27,3 @@ No presentar un test escrito como si estuviera ejecutado. No incluir capturas si
 | ADMIN-01 | Admin atiende/cierra; vecino lo intenta | Solo admin puede cambiar estado | Pendiente |
 | UX-01 | Tres personas ejecutan tareas del documento | Registrar dificultades y cambios | Pendiente |
 | PERF-01 | Entorno autorizado; carga definida y Profiler | CPU, memoria y red registrados | Pendiente |
-
-Por cada ejecución guardar fecha, dispositivos/API, versión/commit, condiciones, pasos, esperado, obtenido, evidencia y estado. Las pruebas de carga deben definir clientes, mensajes y duración y ejecutarse solo en sistemas propios/autorizados.
-
-## Automatización
-
-`CommunityTest` contiene siete casos de dominio. Ejecutar con `./gradlew.bat testDebugUnitTest`. Las pruebas unitarias no prueban Firebase, broker, notificaciones ni permisos.
-
-El 21-11-2026 se compilaron directamente `Community.kt` y `CommunityTest.kt` con el compilador Kotlin 2.3.0 disponible y JDK JetBrains 25, target JVM 17; se ejecutó JUnitCore 4.13.2: **OK (7 tests)**. Este resultado valida exclusivamente el dominio y no equivale a ejecutar `testDebugUnitTest` con el toolchain Android del proyecto. Cubre campos vacíos, vivienda 311A, UUID/identidad, duplicados, límite de caché, rechazo de comodines y tópico de comunidad.
-
-## Restricciones encontradas el 21-11-2026
-
-- Inicio de Gradle con caché por defecto: fallo al cargar biblioteca nativa en directorio no escribible.
-- Segundo intento con caché dentro del workspace: Gradle 9.3.1 inicia, pero la conexión local al daemon es denegada (`Permission denied: getsockopt`). No se llegó a compilar Android.
-- Descarga de rúbrica Excel: fallo DNS. Extracción textual e intento por páginas no producen contenido.
-- Por tanto, compilación Android y pruebas contra servicios reales siguen pendientes.

@@ -1,36 +1,13 @@
-# Checkpoint de continuidad
+# Estado y deuda técnica
 
-Fecha: 21 de noviembre de 2026. Rama: `main`. Proyecto local: `AppCondominios`.
+El equipo verificó el acceso con Google, el perfil, el chat y la entrega de alertas MQTT. La revisión de código identifica estos pendientes, ordenados por impacto:
 
-## Preparado
+| Prioridad | Área | Hallazgo y cambio propuesto |
+|---|---|---|
+| Alta | Recuperación de alertas | El UUID y la fase de publicación o registro viven en `CommunityViewModel`. Si Android termina el proceso tras el acuse MQTT, puede quedar una alerta recibida sin historial. Persistir la operación por cuenta y comunidad, y retomar el registro con el mismo UUID. |
+| Alta | Identidad de alertas | El historial RTDB valida al usuario autenticado, mientras que la alerta en vivo usa los datos del mensaje MQTT. Vincular la identidad del publicador con el evento mediante el servicio que autoriza o emite las alertas. |
+| Media | Recuperación de feeds | `startFeeds()` retorna si queda cualquier listener activo. Si falla solo el de avisos o historial, los otros pueden seguir funcionando mientras ese feed queda congelado. Gestionar el reinicio por feed y exponer reintento en la pantalla afectada. |
+| Media | Galería | `CommunityGallery` espera todas las descargas antes de mostrar la primera foto y conserva las imágenes en una caché en memoria. Empaquetar una imagen inicial o usar caché en disco y mostrar cada foto conforme esté disponible. |
+| Media | Cobertura automatizada | Las pruebas en el repositorio cubren el dominio y la validación de eventos. Faltan pruebas de coordinación de publicación y reintentos, y de permisos de RTDB mediante Emulator Suite. |
 
-- README y documentación de requisitos, arquitectura, configuración, pruebas, etapas e insumos del informe.
-- Proyecto Android Kotlin/Compose, navegación y estado de servicios desconectados.
-- Modelos, validación de registro y pruebas de dominio.
-- Adaptador Firebase Auth/RTDB y transporte Paho MQTT TLS; sin conexión a UI.
-- Propuesta inicial de reglas Firebase. No desplegada ni validada.
-- Gradle Wrapper 9.3.1.
-
-## Confirmado por el usuario
-
-Kotlin + Compose; diseño propio moderno; informe a cargo de otra persona. No existen todavía Firebase ni GitHub para este proyecto.
-
-## Pendiente prioritario
-
-1. Abrir Excel para completar revisión de rúbrica y alcance de compraventa.
-2. Sincronizar y compilar en Android Studio; resolver cualquier incompatibilidad antes de continuar funciones.
-3. Crear Firebase y broker privados, sin activar facturación sin acuerdo.
-4. Conectar Auth/perfil a UI con ViewModel y estado de pertenencia pendiente.
-5. Probar reglas en Emulator Suite y ajustar.
-6. Implementar chat/anuncios/FCM, luego coordinar MQTT con historial y avisos.
-7. Crear remoto GitHub y subir historial local.
-
-## Validación
-
-Siete pruebas de dominio aprobadas con Kotlin/JUnit ejecutados directamente. Build Android bloqueado por restricciones de conexión al daemon. No hay pruebas de integración ni APK generado. Ver `04-pruebas.md` para resultados y límites.
-
-Para obtener el último commit real: `git log -1 --oneline`. No fijar un SHA dentro del mismo commit que se está creando.
-
-## Avance posterior
-
-Compilación Android y 14 pruebas unitarias aprobadas. Arranque, demostración y chat de ejemplo verificados en Pixel 8. Ver [interfaz e integración](08-interfaz-e-integracion.md). Firebase y MQTT reales y FCM siguen pendientes.
+FCM de avisos sigue siendo una funcionalidad pendiente. La atención y el cierre de alertas entre dispositivos siguen pendientes de validación manual.
