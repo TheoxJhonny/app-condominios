@@ -1,0 +1,118 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "profiles": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && newData.exists()",
+        ".validate": "newData.hasChildren(['name','home'])",
+        "name": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 60"
+        },
+        "home": {
+          ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9-]{1,12}$/)"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "communities": {
+      "$communityId": {
+        ".read": "auth != null && auth.token.communityId === $communityId",
+        "messages": {
+          ".indexOn": [
+            "createdAt"
+          ],
+          "$id": {
+            ".write": "auth != null && auth.token.communityId === $communityId && !data.exists() && newData.exists()",
+            ".validate": "newData.hasChildren(['id','userId','name','home','content','createdAt'])",
+            "id": {
+              ".validate": "data.exists() ? newData.val() === data.val() : (newData.isString() && newData.val() === $id)"
+            },
+            "userId": {
+              ".validate": "data.exists() ? newData.val() === data.val() : (newData.val() === auth.uid)"
+            },
+            "name": {
+              ".validate": "data.exists() ? newData.val() === data.val() : (newData.isString() && newData.val() === root.child('profiles').child(auth.uid).child('name').val())"
+            },
+            "home": {
+              ".validate": "data.exists() ? newData.val() === data.val() : (newData.isString() && newData.val() === root.child('profiles').child(auth.uid).child('home').val())"
+            },
+            "createdAt": {
+              ".validate": "data.exists() ? newData.val() === data.val() : (newData.isNumber() && newData.val() === now)"
+            },
+            "$other": {
+              ".validate": false
+            },
+            "content": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 2000"
+            }
+          }
+        },
+        "announcements": {
+          ".indexOn": [
+            "createdAt"
+          ],
+          "$id": {
+            ".write": "auth != null && auth.token.communityId === $communityId && auth.token.admin === true && !data.exists() && newData.exists()",
+            ".validate": "newData.hasChildren(['id','userId','title','content','createdAt'])",
+            "id": {
+              ".validate": "data.exists() ? newData.val() === data.val() : (newData.isString() && newData.val() === $id)"
+            },
+            "userId": {
+              ".validate": "data.exists() ? newData.val() === data.val() : (newData.val() === auth.uid)"
+            },
+            "createdAt": {
+              ".validate": "data.exists() ? newData.val() === data.val() : (newData.isNumber() && newData.val() === now)"
+            },
+            "title": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120"
+            },
+            "content": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 5000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "alerts": {
+          ".indexOn": [
+            "createdAt"
+          ],
+          "$id": {
+            ".write": "auth != null && auth.token.communityId === $communityId && !data.exists() && newData.exists()",
+            ".validate": "newData.hasChildren(['id','communityId','userId','name','home','createdAt','status'])",
+            "id": {
+              ".validate": "data.exists() ? newData.val() === data.val() : (newData.isString() && newData.val() === $id)"
+            },
+            "userId": {
+              ".validate": "data.exists() ? newData.val() === data.val() : (newData.val() === auth.uid)"
+            },
+            "name": {
+              ".validate": "data.exists() ? newData.val() === data.val() : (newData.isString() && newData.val() === root.child('profiles').child(auth.uid).child('name').val())"
+            },
+            "home": {
+              ".validate": "data.exists() ? newData.val() === data.val() : (newData.isString() && newData.val() === root.child('profiles').child(auth.uid).child('home').val())"
+            },
+            "createdAt": {
+              ".validate": "data.exists() ? newData.val() === data.val() : (newData.isNumber() && newData.val() === now)"
+            },
+            "$other": {
+              ".validate": false
+            },
+            "communityId": {
+              ".validate": "data.exists() ? newData.val() === data.val() : (newData.val() === $communityId)"
+            },
+            "status": {
+              ".write": "auth != null && auth.token.communityId === $communityId && auth.token.admin === true && data.exists() && newData.exists()",
+              ".validate": "(!data.exists() && newData.val() === 'ACTIVE') || (data.exists() && ((data.val() === 'ACTIVE' && (newData.val() === 'ACKNOWLEDGED' || newData.val() === 'CLOSED')) || (data.val() === 'ACKNOWLEDGED' && newData.val() === 'CLOSED')))"
+            }
+          }
+        }
+      }
+    }
+  }
+}
