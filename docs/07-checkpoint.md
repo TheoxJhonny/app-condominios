@@ -30,3 +30,7 @@ Kotlin + Compose; diseño propio moderno; informe a cargo de otra persona. No ex
 Siete pruebas de dominio aprobadas con Kotlin/JUnit ejecutados directamente. Build Android bloqueado por restricciones de conexión al daemon. No hay pruebas de integración ni APK generado. Ver `04-pruebas.md` para resultados y límites.
 
 Para obtener el último commit real: `git log -1 --oneline`. No fijar un SHA dentro del mismo commit que se está creando.
+
+## Avance posterior
+
+Compilación Android y 14 pruebas unitarias aprobadas. Arranque, demostración y chat de ejemplo verificados en Pixel 8. Ver [interfaz e integración](08-interfaz-e-integracion.md). Firebase y MQTT reales y FCM siguen pendientes.

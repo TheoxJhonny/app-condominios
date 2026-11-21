@@ -2,9 +2,11 @@
 
 Aplicación Android de Jonathan Fuentealba para residentes y administradores de una comunidad. Kotlin + Jetpack Compose; Firebase Authentication, Realtime Database, FCM y MQTT.
 
-## Estado real: etapa inicial
+## Estado real: interfaz funcional e integración preparada
 
-Se incluyen una interfaz inicial propia, modelos, validaciones, siete pruebas unitarias, un adaptador Firebase y un transporte MQTT. Los adaptadores todavía no están conectados a la interfaz ni probados contra servicios reales. No hay autenticación operativa desde la pantalla, ni notificaciones FCM implementadas. El botón de ayuda informa explícitamente que no ha enviado ninguna alerta.
+Incluye diseño propio en Compose; pantallas de ingreso, registro, recuperación, perfil, chat, avisos y alertas; ViewModel con StateFlow; repositorio Firebase y transporte MQTT conectados a los flujos de la interfaz. Sin configuración Firebase, se puede explorar una demostración con datos locales, identificada de forma visible. La demostración no crea cuentas ni envía alarmas reales.
+
+Firebase y broker privados todavía no existen, por lo que los flujos reales entre dispositivos siguen pendientes de verificación. FCM de anuncios y su backend emisor aún están pendientes. No confundir las notificaciones locales de MQTT con FCM.
 
 No es todavía una entrega funcional para evaluación. No usar como sistema de emergencias.
 
@@ -15,11 +17,11 @@ No es todavía una entrega funcional para evaluación. No usar como sistema de e
 3. Ejecutar `./gradlew testDebugUnitTest assembleDebug` (Windows: `./gradlew.bat testDebugUnitTest assembleDebug`).
 4. Ejecutar en emulador o teléfono Android 8.0/API 26 o superior.
 
-El APK aún no se ha compilado en este entorno: la conexión local con el daemon de Gradle fue bloqueada. Consultar [pruebas](docs/04-pruebas.md).
+El 21-11-2026 se ejecutaron desde Android Studio `:app:testDebugUnitTest :app:assembleDebug`: **BUILD SUCCESSFUL, 14 pruebas aprobadas**. El problema inicial del daemon por terminal se resolvió usando la ejecución del IDE. Firebase BoM quedó fijada en 34.7.0 por compatibilidad con Kotlin 2.2.10. Consultar [pruebas](docs/04-pruebas.md).
 
 ## Configuración pendiente
 
-No se necesitan cuentas externas para revisar el código y la interfaz inicial. Para las funciones reales se deben crear un proyecto Firebase y un broker MQTT privado con TLS y permisos por comunidad. Nunca incluir contraseñas del broker, claves de servicio o tokens en Git.
+No se necesitan cuentas externas para explorar la demostración. Para las funciones reales se deben crear un proyecto Firebase y un broker MQTT privado con TLS y permisos por comunidad. Al añadir `app/google-services.json`, Gradle aplica Google Services automáticamente. Las credenciales MQTT se introducen en Alertas y se conservan solo durante la conexión en memoria. Nunca incluir contraseñas del broker, claves de servicio o tokens en Git.
 
 Ver [configuración](docs/03-configuracion.md), [arquitectura](docs/02-arquitectura.md) y [etapas](docs/05-etapas.md). El informe lo prepara otra persona: [antecedentes técnicos para compartir](docs/06-insumos-informe.md).
 

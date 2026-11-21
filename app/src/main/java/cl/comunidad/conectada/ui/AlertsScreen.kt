@@ -1,0 +1,81 @@
+package cl.comunidad.conectada.ui
+
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
+import cl.comunidad.conectada.domain.*
+
+@Composable
+fun AlertsScreen(state: CommunityState, model: CommunityViewModel, onAlert: () -> Unit, onNotificationPermission: () -> Unit) {
+    var showConnection by remember { mutableStateOf(false) }
+    LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        item { Text("Cuidarnos empieza\npor estar conectados.", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold) }
+        item { Surface(color = Color.White, shape = MaterialTheme.shapes.medium) {
+            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(if (state.mqttConnected) "● Servicio de alertas conectado" else if (state.mqttConnecting) "Conectando al servicio…" else "○ Servicio de alertas desconectado", fontWeight = FontWeight.SemiBold)
+                Text("Las alertas en tiempo real se reciben con la aplicación abierta y conectada.", color = Muted)
+                OutlinedButton(onClick = { if (state.mqttConnected || state.mqttConnecting) model.disconnectMqtt() else showConnection = true }, enabled = !state.demo) {
+                    Text(if (state.mqttConnected || state.mqttConnecting) "Desconectar" else "Conectar servicio")
+                }
+            }
+        } }
+        item { Button(onClick = onAlert, enabled = state.delivery.canStartAnother(), modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp), colors = ButtonDefaults.buttonColors(containerColor = AlertRed)) {
+            Icon(Icons.Default.Warning, null); Spacer(Modifier.width(12.dp)); Text("Solicitar ayuda a mis vecinos")
+        } }
+        item {
+            val deliveryText = when (val delivery = state.delivery) {
+                AlertDelivery.Idle -> "Se solicitará confirmación antes de activar una alerta."
+                is AlertDelivery.Publishing -> "Publicando alerta al servicio…"
+                is AlertDelivery.Recording -> "El broker confirmó la publicación. Guardando historial…"
+                is AlertDelivery.Sent -> "Publicación confirmada por el broker e historial guardado. Esto no confirma que todos los vecinos la hayan visto."
+                is AlertDelivery.Failed -> if (delivery.brokerAcknowledged) "Publicada al broker. El historial está pendiente de registro." else "No se pudo confirmar el envío. Reintenta con el mismo identificador."
+            }
+            Text(deliveryText, style = MaterialTheme.typography.bodySmall, color = Muted)
+            if (state.delivery is AlertDelivery.Failed) TextButton(onClick = model::retryAlert) { Text("Reintentar operación pendiente") }
+        }
+        item { TextButton(onClick = onNotificationPermission) { Text("Habilitar notificaciones en este dispositivo") } }
+        item { Text("Historial de la comunidad", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
+        if (state.alerts.isEmpty()) item { EmptyState("Sin alertas registradas", "El historial mostrará quién solicitó ayuda y el estado de atención.") }
+        items(state.alerts, key = { it.id }) { alert -> Surface(color = Color.White, shape = MaterialTheme.shapes.medium) {
+            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("${alert.name} · #${alert.home}", fontWeight = FontWeight.SemiBold)
+                Text(formatTime(alert.createdAt), style = MaterialTheme.typography.bodySmall, color = Muted)
+                Text(when (alert.status) { "ACTIVE" -> "Activa"; "ACKNOWLEDGED" -> "Atendida"; "CLOSED" -> "Cerrada"; else -> "Estado no reconocido" }, color = if (alert.status == "ACTIVE") AlertRed else Ink)
+                if (state.resident?.role == Role.ADMIN && alert.status != "CLOSED") Row {
+                    if (alert.status == "ACTIVE") TextButton(onClick = { model.updateAlert(alert.id, AlertStatus.ACKNOWLEDGED) }, enabled = !state.busy) { Text("Marcar atendida") }
+                    TextButton(onClick = { model.updateAlert(alert.id, AlertStatus.CLOSED) }, enabled = !state.busy) { Text("Cerrar") }
+                }
+            }
+        } }
+    }
+    if (showConnection) ConnectionDialog(onDismiss = { showConnection = false }) { host, username, password ->
+        model.connectMqtt(host, username, password)
+        showConnection = false
+    }
+}
+
+@Composable
+private fun ConnectionDialog(onDismiss: () -> Unit, onConnect: (String, String, String) -> Unit) {
+    var host by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    AlertDialog(onDismissRequest = onDismiss, title = { Text("Conectar alertas") }, text = {
+        Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Usa las credenciales asignadas por administración. Conexión segura TLS; los datos no se guardan en el dispositivo.", style = MaterialTheme.typography.bodySmall)
+            OutlinedTextField(host, { host = it }, label = { Text("Host del broker") }, placeholder = { Text("broker.ejemplo.cl") }, singleLine = true)
+            OutlinedTextField(username, { username = it }, label = { Text("Usuario") }, singleLine = true)
+            OutlinedTextField(password, { password = it }, label = { Text("Contraseña") }, singleLine = true, visualTransformation = PasswordVisualTransformation())
+        }
+    }, confirmButton = { TextButton(onClick = { onConnect(host, username, password); password = "" }, enabled = host.isNotBlank() && username.isNotBlank() && password.isNotEmpty()) { Text("Conectar") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } })
+}

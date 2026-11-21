@@ -83,7 +83,7 @@
             "createdAt"
           ],
           "$id": {
-            ".write": "auth != null && auth.token.communityId === $communityId && !data.exists() && newData.exists()",
+            ".write": "auth != null && auth.token.communityId === $communityId && newData.exists() && (!data.exists() || (data.child('userId').val() === auth.uid && newData.child('id').val() === data.child('id').val() && newData.child('communityId').val() === data.child('communityId').val() && newData.child('userId').val() === data.child('userId').val() && newData.child('name').val() === data.child('name').val() && newData.child('home').val() === data.child('home').val() && newData.child('createdAt').val() === data.child('createdAt').val() && newData.child('status').val() === data.child('status').val()))",
             ".validate": "newData.hasChildren(['id','communityId','userId','name','home','createdAt','status'])",
             "id": {
               ".validate": "data.exists() ? newData.val() === data.val() : (newData.isString() && newData.val() === $id)"
@@ -108,7 +108,7 @@
             },
             "status": {
               ".write": "auth != null && auth.token.communityId === $communityId && auth.token.admin === true && data.exists() && newData.exists()",
-              ".validate": "(!data.exists() && newData.val() === 'ACTIVE') || (data.exists() && ((data.val() === 'ACTIVE' && (newData.val() === 'ACKNOWLEDGED' || newData.val() === 'CLOSED')) || (data.val() === 'ACKNOWLEDGED' && newData.val() === 'CLOSED')))"
+              ".validate": "(data.exists() && newData.val() === data.val()) || (!data.exists() && newData.val() === 'ACTIVE') || (data.exists() && ((data.val() === 'ACTIVE' && (newData.val() === 'ACKNOWLEDGED' || newData.val() === 'CLOSED')) || (data.val() === 'ACKNOWLEDGED' && newData.val() === 'CLOSED')))"
             }
           }
         }
