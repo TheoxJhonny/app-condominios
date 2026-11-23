@@ -178,6 +178,10 @@ class FirebaseCommunityRepository(
         }
     }
 
+    suspend fun deleteAlert(communityId: String, alertId: String) {
+        community(communityId).child("alerts").child(alertId).removeValue().await()
+    }
+
     suspend fun updateAlertStatus(communityId: String, alertId: String, status: AlertStatus) {
         require(status != AlertStatus.ACTIVE)
         community(communityId).child("alerts").child(alertId).child("status").setValue(status.name)

@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import cl.comunidad.conectada.data.AlertRecord
 import cl.comunidad.conectada.domain.*
 
 @Composable
@@ -24,6 +25,10 @@ fun AlertsScreen(
     onNotificationPermission: () -> Unit
 ) {
     var showConnection by remember { mutableStateOf(false) }
+    val canManageAlerts = state.member && !state.demo && state.resident?.role == Role.ADMIN
+    var alertToDelete by remember(state.resident?.uid, state.resident?.communityId) {
+        mutableStateOf<AlertRecord?>(null)
+    }
     LazyColumn(
         contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
@@ -159,7 +164,14 @@ fun AlertsScreen(
                             "ACTIVE" -> "Activa"; "ACKNOWLEDGED" -> "Atendida"; "CLOSED" -> "Cerrada"; else -> "Estado no reconocido"
                         }, color = if (alert.status == "ACTIVE") AlertRed else Ink
                     )
-                    if (state.resident?.role == Role.ADMIN && alert.status != "CLOSED") Row {
+                    if (canManageAlerts && alert.status == AlertStatus.CLOSED.name) {
+                        TextButton(
+                            shape = Square,
+                            onClick = { alertToDelete = alert },
+                            enabled = !state.busy
+                        ) { Text("Eliminar alerta", color = if (state.busy) Muted else AlertRed) }
+                    }
+                    if (canManageAlerts && alert.status != AlertStatus.CLOSED.name) Row {
                         if (alert.status == "ACTIVE") TextButton(
                             shape = Square,
                             onClick = { model.updateAlert(alert.id, AlertStatus.ACKNOWLEDGED) },
@@ -174,6 +186,28 @@ fun AlertsScreen(
                 }
             }
         }
+    }
+    alertToDelete?.takeIf { canManageAlerts }?.let { alert ->
+        AlertDialog(
+            shape = Square,
+            onDismissRequest = { if (!state.busy) alertToDelete = null },
+            title = { Text("¿Eliminar esta alerta cerrada?") },
+            text = { Text("La alerta de ${alert.name} · #${alert.home} desaparecerá del historial de toda la comunidad.") },
+            confirmButton = {
+                TextButton(
+                    shape = Square,
+                    enabled = !state.busy && state.alerts.any { it.id == alert.id && it.status == AlertStatus.CLOSED.name },
+                    onClick = { model.deleteClosedAlert(alert.id) { alertToDelete = null } }
+                ) { Text("Eliminar", color = if (state.busy) Muted else AlertRed) }
+            },
+            dismissButton = {
+                TextButton(
+                    shape = Square,
+                    enabled = !state.busy,
+                    onClick = { alertToDelete = null }
+                ) { Text("Cancelar") }
+            }
+        )
     }
     if (showConnection) ConnectionDialog(onDismiss = {
         showConnection = false

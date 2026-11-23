@@ -7,7 +7,7 @@
 | Inicio | Galería de fachada, piscina, áreas verdes y terraza, avisos recientes y accesos rápidos |
 | Chat | Últimos 50 mensajes y envío al canal de la comunidad |
 | Avisos | Últimos 30 avisos, detalle con autor, publicación y eliminación para administradores y apertura por ID desde una notificación FCM |
-| Alertas | Conexión MQTT, confirmación de envío con descripción opcional de la emergencia de hasta 240 caracteres, historial y cambio de estado para administradores |
+| Alertas | Conexión MQTT, confirmación de envío con descripción opcional de la emergencia de hasta 240 caracteres, historial, cambio de estado y eliminación de alertas cerradas para administradores |
 | Perfil | Edición de datos de residente, permiso de notificaciones y cierre de sesión |
 
 La galería utiliza fotografías referenciales de Unsplash. Admite deslizamiento manual y avance cada seis segundos con opción de pausa. Descarga las imágenes por Internet y las mantiene en memoria durante el proceso de la app. El modo demostración conserva sus datos de ejemplo durante la sesión y no activa alertas reales.

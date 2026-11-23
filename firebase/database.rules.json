@@ -96,7 +96,7 @@
             "createdAt"
           ],
           "$id": {
-            ".write": "auth != null && auth.token.communityId === $communityId && newData.exists() && (!data.exists() || (data.child('userId').val() === auth.uid && newData.child('id').val() === data.child('id').val() && newData.child('communityId').val() === data.child('communityId').val() && newData.child('userId').val() === data.child('userId').val() && newData.child('name').val() === data.child('name').val() && newData.child('home').val() === data.child('home').val() && newData.child('createdAt').val() === data.child('createdAt').val() && newData.child('subject').val() === data.child('subject').val() && newData.child('status').val() === data.child('status').val()))",
+            ".write": "auth != null && auth.token.communityId === $communityId && ((!newData.exists() && data.child('status').val() === 'CLOSED' && auth.token.admin === true) || (newData.exists() && (!data.exists() || (data.child('userId').val() === auth.uid && newData.child('id').val() === data.child('id').val() && newData.child('communityId').val() === data.child('communityId').val() && newData.child('userId').val() === data.child('userId').val() && newData.child('name').val() === data.child('name').val() && newData.child('home').val() === data.child('home').val() && newData.child('createdAt').val() === data.child('createdAt').val() && newData.child('subject').val() === data.child('subject').val() && newData.child('status').val() === data.child('status').val()))))",
             ".validate": "newData.hasChildren(['id','communityId','userId','name','home','createdAt','status'])",
             "id": {
               ".validate": "data.exists() ? newData.val() === data.val() : (newData.isString() && newData.val() === $id)"

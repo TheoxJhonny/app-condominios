@@ -239,6 +239,16 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
         notice("Aviso eliminado.")
     }
 
+    fun deleteClosedAlert(id: String, onDeleted: () -> Unit) = operation {
+        val current = state.value
+        val resident = checkNotNull(current.resident)
+        check(current.member && !current.demo && resident.role == Role.ADMIN)
+        check(current.alerts.any { it.id == id && it.status == AlertStatus.CLOSED.name })
+        requireRepository().deleteAlert(resident.communityId, id)
+        onDeleted()
+        notice("Alerta eliminada.")
+    }
+
     fun updateAlert(id: String, status: AlertStatus) = operation {
         check(!state.value.demo && state.value.resident?.role == Role.ADMIN)
         requireRepository().updateAlertStatus(state.value.resident!!.communityId, id, status)
