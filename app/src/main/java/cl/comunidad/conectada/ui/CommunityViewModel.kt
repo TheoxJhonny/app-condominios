@@ -44,7 +44,7 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
     val state: StateFlow<CommunityState> = mutable.asStateFlow()
     private val feeds = mutableListOf<Job>()
 
-    private class MqttCredentials(val host: String, val username: String, val password: CharArray)
+    private val mqttCredentialStore = MqttCredentialStore(app)
 
     private var mqttCredentials: MqttCredentials? = null
     private var mqtt: MqttAlertClient? = null
@@ -102,6 +102,10 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
     private suspend fun loadSession(repo: FirebaseCommunityRepository) {
         stopFeeds()
         val resident = repo.resident()
+        val previous = state.value.resident
+        if (previous?.uid != resident.uid || previous.communityId != resident.communityId) {
+            clearMqttSession()
+        }
         mutable.update {
             it.copy(
                 resident = resident,
@@ -112,8 +116,19 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
             )
         }
         val app = getApplication<Application>()
-        if (state.value.member) AnnouncementPush.bind(app, resident.uid, resident.communityId)
-        else AnnouncementPush.unbind(app)
+        if (state.value.member) {
+            AnnouncementPush.bind(app, resident.uid, resident.communityId)
+            if (mqttCredentials == null) {
+                mqttCredentials = runCatching { mqttCredentialStore.load(resident) }
+                    .onFailure { notice("No se pudieron recuperar las credenciales de MQTT. Ingresa de nuevo los datos del broker.") }
+                    .getOrNull()
+                mutable.update { it.copy(mqttConfigured = mqttCredentials != null) }
+            }
+            reconnectMqtt()
+        } else {
+            AnnouncementPush.unbind(app)
+            clearMqttSession()
+        }
         startFeeds()
     }
 
@@ -155,7 +170,7 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun signOut() {
-        stopFeeds(); disconnectMqtt()
+        stopFeeds(); clearMqttSession()
         AnnouncementPush.unbind(getApplication<Application>())
         repository?.signOut()
         mutable.value = CommunityState(configured = repository != null)
@@ -163,7 +178,7 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
 
     fun enterDemo() {
         if (state.value.busy) return
-        stopFeeds(); disconnectMqtt()
+        stopFeeds(); clearMqttSession()
         AnnouncementPush.unbind(getApplication<Application>())
         val now = System.currentTimeMillis()
         mutable.value = CommunityState(
@@ -300,8 +315,12 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
             notice("El modo demostración no se conecta a servicios externos."); return
         }
         if (!state.value.member || !foreground || state.value.mqttConnecting) return
-        disconnectMqtt()
-        mqttCredentials = MqttCredentials(host.trim(), username.trim(), password.toCharArray())
+        val resident = state.value.resident ?: return
+        clearMqttSession()
+        val credentials = MqttCredentials(host.trim(), username.trim(), password.toCharArray())
+        mqttCredentials = credentials
+        runCatching { mqttCredentialStore.save(resident, credentials) }
+            .onFailure { notice("Las credenciales de MQTT estarán disponibles solo durante esta sesión.") }
         mutable.update { it.copy(mqttConfigured = true) }
         reconnectMqtt()
     }
@@ -365,6 +384,16 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun disconnectMqtt() {
+        val resident = state.value.resident ?: return
+        runCatching { mqttCredentialStore.forget(resident) }
+            .onFailure {
+                notice("No se pudieron olvidar las credenciales de MQTT. Inténtalo nuevamente.")
+                return
+            }
+        clearMqttSession()
+    }
+
+    private fun clearMqttSession() {
         mqttCredentials?.password?.fill('\u0000')
         mqttCredentials = null
         mutable.update { it.copy(mqttConfigured = false) }

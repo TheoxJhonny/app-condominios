@@ -87,7 +87,7 @@ fun AlertsScreen(
                     ) {
                         Text(
                             when {
-                                connectedOrConnecting -> "Desconectar"
+                                connectedOrConnecting -> "Desconectar y olvidar credenciales"
                                 state.mqttConfigured -> "Reconectar servicio"
                                 else -> "Conectar servicio"
                             }
@@ -97,6 +97,9 @@ fun AlertsScreen(
                         TextButton(
                             shape = Square,
                             onClick = { showConnection = true }) { Text("Cambiar credenciales") }
+                        TextButton(shape = Square, onClick = model::disconnectMqtt) {
+                            Text("Olvidar credenciales")
+                        }
                     }
                 }
             }
@@ -239,7 +242,7 @@ private fun ConnectionDialog(onDismiss: () -> Unit, onConnect: (String, String, 
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    "Usa las credenciales asignadas por administración. Conexión segura TLS. Las credenciales se conservan en memoria durante esta sesión.",
+                    "Usa las credenciales asignadas por administración. Conexión segura TLS. Las credenciales se guardan cifradas en este dispositivo.",
                     style = MaterialTheme.typography.bodySmall
                 )
                 OutlinedTextField(

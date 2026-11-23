@@ -15,7 +15,7 @@ Usa una cuenta de Google distinta de la cuenta vecina. Inicia sesión al menos u
 
 ## MQTT
 
-Las pruebas manuales utilizaron EMQX Serverless por TLS en el puerto 8883. En **Alertas**, introducir host, usuario y contraseña. El broker debe restringir publicación y suscripción al tópico de la comunidad correspondiente. Al desconectar manualmente o cerrar sesión, la app descarta las credenciales de sesión. Mantener credenciales administrativas y del broker fuera del repositorio.
+Las pruebas manuales utilizaron EMQX Serverless por TLS en el puerto 8883. En **Alertas**, introducir host, usuario y contraseña. El broker debe restringir publicación y suscripción al tópico de la comunidad correspondiente. La app cifra las credenciales en el dispositivo por cuenta y comunidad, y las reutiliza al volver a entrar. Cerrar sesión limpia la conexión y las credenciales en memoria. Para borrar los datos guardados, usa **Desconectar y olvidar credenciales** o **Olvidar credenciales** en Alertas. Mantener credenciales administrativas y del broker fuera del repositorio.
 
 ## FCM
 
