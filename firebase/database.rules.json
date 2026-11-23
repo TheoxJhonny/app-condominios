@@ -66,7 +66,7 @@
             "createdAt"
           ],
           "$id": {
-            ".write": "auth != null && auth.token.communityId === $communityId && auth.token.admin === true && !data.exists() && newData.exists()",
+            ".write": "auth != null && auth.token.communityId === $communityId && auth.token.admin === true && (!newData.exists() || !data.exists())",
             ".validate": "newData.hasChildren(['id','userId','title','content','createdAt'])",
             "id": {
               ".validate": "data.exists() ? newData.val() === data.val() : (newData.isString() && newData.val() === $id)"

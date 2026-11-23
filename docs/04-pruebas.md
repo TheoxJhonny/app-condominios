@@ -15,6 +15,8 @@
 | CHAT-01 | Dos usuarios en dos dispositivos; A envía | B recibe nombre, vivienda, contenido y fecha | Verificado entre teléfono y emulador |
 | SEC-01 | Vecino escribe directamente un anuncio con SDK/REST | Reglas rechazan | Pendiente |
 | SEC-02 | Vecino intenta escribir rol o leer otra comunidad | Reglas rechazan | Pendiente |
+| AVISO-01 | Admin abre un aviso, cancela el borrado y después lo confirma | Cancelar conserva el aviso; confirmar lo retira de la lista y de Inicio en ambos dispositivos | Pendiente |
+| AVISO-02 | Vecino consulta el aviso o intenta eliminarlo mediante Firebase | La app oculta la opción y las reglas rechazan el borrado | Pendiente |
 | FCM-01 | Admin publica; B recibe y toca aviso | Abrir el mismo aviso por ID, incluso si ya no está entre los últimos 30 | Prueba local del emisor aprobada; despliegue y prueba real pendientes |
 | MQTT-01 | Dos clientes; A confirma alarma | B recibe identidad y vivienda | Recepción verificada entre dos dispositivos |
 | MQTT-02 | Repetir mismo UUID | Un solo aviso por ID | Unidad inicial implementada; integración pendiente |

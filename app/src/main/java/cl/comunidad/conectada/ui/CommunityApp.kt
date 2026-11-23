@@ -290,7 +290,35 @@ fun CommunityApp(
             })
     }
     detail?.let { announcement ->
-        AlertDialog(
+        val canDelete = state.member && !state.demo && state.resident?.role == Role.ADMIN
+        var confirmDelete by remember(announcement.id) { mutableStateOf(false) }
+        if (confirmDelete && canDelete) {
+            AlertDialog(
+                shape = Square,
+                onDismissRequest = { if (!state.busy) confirmDelete = false },
+                title = { Text("¿Eliminar este aviso?") },
+                text = { Text("«${announcement.title}» desaparecerá de Avisos para toda la comunidad.") },
+                confirmButton = {
+                    TextButton(
+                        shape = Square,
+                        enabled = !state.busy,
+                        onClick = {
+                            model.deleteAnnouncement(announcement.id) {
+                                if (detail?.id == announcement.id) detail = null
+                                confirmDelete = false
+                            }
+                        }
+                    ) { Text("Eliminar", color = if (state.busy) Muted else AlertRed) }
+                },
+                dismissButton = {
+                    TextButton(
+                        shape = Square,
+                        enabled = !state.busy,
+                        onClick = { confirmDelete = false }
+                    ) { Text("Cancelar") }
+                }
+            )
+        } else AlertDialog(
             shape = Square,
             onDismissRequest = { detail = null },
             title = { Text(announcement.title) },
@@ -310,7 +338,15 @@ fun CommunityApp(
                 TextButton(
                     shape = Square,
                     onClick = { detail = null }) { Text("Cerrar") }
-            })
+            },
+            dismissButton = {
+                if (canDelete) TextButton(
+                    shape = Square,
+                    enabled = !state.busy,
+                    onClick = { confirmDelete = true }
+                ) { Text("Eliminar aviso", color = if (state.busy) Muted else AlertRed) }
+            }
+        )
     }
     if (composeAnnouncement) AnnouncementEditor(
         state.busy,

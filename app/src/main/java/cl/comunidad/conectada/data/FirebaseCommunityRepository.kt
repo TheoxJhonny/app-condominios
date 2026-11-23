@@ -139,6 +139,10 @@ class FirebaseCommunityRepository(
         ).await()
     }
 
+    suspend fun deleteAnnouncement(link: AnnouncementLink) {
+        community(link.communityId).child("announcements").child(link.id).removeValue().await()
+    }
+
     suspend fun recordAlert(alert: CommunityAlert) {
         require(alert.userId == uid())
         val payload = mapOf(

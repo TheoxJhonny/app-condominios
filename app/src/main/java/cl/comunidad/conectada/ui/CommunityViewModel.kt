@@ -229,6 +229,16 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
         notice("Aviso publicado.")
     }
 
+    fun deleteAnnouncement(id: String, onDeleted: () -> Unit) = operation {
+        val current = state.value
+        val resident = checkNotNull(current.resident)
+        check(current.member && !current.demo && resident.role == Role.ADMIN)
+        val link = requireNotNull(AnnouncementLink.parse(resident.communityId, id))
+        requireRepository().deleteAnnouncement(link)
+        onDeleted()
+        notice("Aviso eliminado.")
+    }
+
     fun updateAlert(id: String, status: AlertStatus) = operation {
         check(!state.value.demo && state.value.resident?.role == Role.ADMIN)
         requireRepository().updateAlertStatus(state.value.resident!!.communityId, id, status)

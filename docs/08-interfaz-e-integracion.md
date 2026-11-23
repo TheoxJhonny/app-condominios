@@ -6,7 +6,7 @@
 | Pertenencia | Completar perfil, consultar UID y comprobar acceso tras la admisión |
 | Inicio | Galería de fachada, piscina, áreas verdes y terraza, avisos recientes y accesos rápidos |
 | Chat | Últimos 50 mensajes y envío al canal de la comunidad |
-| Avisos | Últimos 30 avisos, detalle con autor, publicación para administradores y apertura por ID desde una notificación FCM |
+| Avisos | Últimos 30 avisos, detalle con autor, publicación y eliminación para administradores y apertura por ID desde una notificación FCM |
 | Alertas | Conexión MQTT, confirmación de envío con descripción opcional de la emergencia de hasta 240 caracteres, historial y cambio de estado para administradores |
 | Perfil | Edición de datos de residente, permiso de notificaciones y cierre de sesión |
 
