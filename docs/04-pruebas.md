@@ -19,6 +19,7 @@
 | AVISO-02 | Vecino consulta el aviso o intenta eliminarlo mediante Firebase | La app oculta la opción y las reglas rechazan el borrado | Pendiente |
 | FCM-01 | Admin publica; B recibe y toca aviso | Abrir el mismo aviso por ID, incluso si ya no está entre los últimos 30 | Prueba local del emisor aprobada; despliegue y prueba real pendientes |
 | MQTT-01 | Dos clientes; A confirma alarma | B recibe identidad y vivienda | Recepción verificada entre dos dispositivos |
+| MQTT-DESC | Enviar una alerta con descripción y abrir el historial en otro dispositivo | La descripción completa aparece en el registro, incluso después de reabrir la app | Pendiente |
 | MQTT-02 | Repetir mismo UUID | Un solo aviso por ID | Unidad inicial implementada; integración pendiente |
 | MQTT-03 | Desactivar red antes de publicar | Estado sin enviar | Pendiente |
 | MQTT-04 | Cortar/restaurar red y publicar otro evento | Recuperar suscripción sin duplicación | Pendiente |

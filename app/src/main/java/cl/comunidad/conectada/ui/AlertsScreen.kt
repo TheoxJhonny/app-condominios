@@ -153,7 +153,14 @@ fun AlertsScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text("${alert.name} · #${alert.home}", fontWeight = FontWeight.SemiBold)
-                    if (alert.subject.isNotBlank()) Text(alert.subject)
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Descripción de la emergencia", style = MaterialTheme.typography.labelMedium)
+                        Text(
+                            alert.subject.ifBlank { "Sin descripción registrada" },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (alert.subject.isBlank()) Muted else Ink
+                        )
+                    }
                     Text(
                         formatTime(alert.createdAt),
                         style = MaterialTheme.typography.bodySmall,
