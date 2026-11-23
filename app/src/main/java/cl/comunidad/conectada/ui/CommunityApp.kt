@@ -232,30 +232,57 @@ fun CommunityApp(
             }
         }
     }
-    if (confirm) AlertDialog(
-        shape = Square,
-        onDismissRequest = { confirm = false },
-        icon = { Icon(Icons.Default.Warning, null) },
-        title = { Text("¿Necesitas ayuda?") },
-        text = { Text(if (state.demo) "Estás en una demostración. No se enviará ninguna alerta real." else "Se compartirá tu nombre y vivienda con los vecinos conectados. Activa la alerta solo si necesitas asistencia.") },
-        confirmButton = {
-            TextButton(
-                shape = Square,
-                onClick = {
-                    confirm = false; model.activateAlert()
-                }) { Text(if (state.demo) "Comprobar estado" else "Confirmar alerta") }
-        },
-        dismissButton = {
-            TextButton(
-                shape = Square,
-                onClick = { confirm = false }) { Text("Cancelar") }
-        })
+    if (confirm) {
+        var subject by rememberSaveable { mutableStateOf("") }
+        AlertDialog(
+            shape = Square,
+            onDismissRequest = { confirm = false },
+            icon = { Icon(Icons.Default.Warning, null) },
+            title = { Text("¿Necesitas ayuda?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(if (state.demo) "Estás en una demostración. No se enviará ninguna alerta real."
+                        else "Se compartirán la descripción, tu nombre y vivienda con los vecinos conectados.")
+                    OutlinedTextField(
+                        value = subject,
+                        onValueChange = {
+                            subject = it.filterNot { character -> character.isISOControl() }
+                                .take(AlertFactory.MAX_DESCRIPTION_LENGTH)
+                        },
+                        label = { Text("Descripción de la emergencia (opcional)") },
+                        placeholder = { Text("Ej. El portón quedó bloqueado y hay un vehículo atrapado.") },
+                        minLines = 3,
+                        maxLines = 5,
+                        supportingText = { Text("${subject.length} / ${AlertFactory.MAX_DESCRIPTION_LENGTH}") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    shape = Square,
+                    onClick = {
+                        confirm = false
+                        model.activateAlert(subject)
+                    }) { Text(if (state.demo) "Comprobar estado" else "Confirmar alerta") }
+            },
+            dismissButton = {
+                TextButton(
+                    shape = Square,
+                    onClick = { confirm = false }) { Text("Cancelar") }
+            })
+    }
     state.incoming?.let { alert ->
         AlertDialog(
             shape = Square,
             onDismissRequest = model::dismissIncoming,
             title = { Text("Un vecino necesita ayuda") },
-            text = { Text("${alert.name} · Vivienda #${alert.home}\n\nHa activado una alerta comunitaria.") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("${alert.name} · Vivienda #${alert.home}")
+                    Text(alert.subject.ifBlank { "Ha activado una alerta comunitaria." })
+                }
+            },
             confirmButton = {
                 TextButton(
                     shape = Square,

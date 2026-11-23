@@ -13,4 +13,18 @@ class AlertEventValidatorTest {
     @Test fun rejectsInvalidEventId() { assertFalse(AlertEventValidator.accepts(alert.copy(id = "anything"), "comunidad01", now)) }
     @Test fun rejectsClosedEvent() { assertFalse(AlertEventValidator.accepts(alert.copy(status = AlertStatus.CLOSED), "comunidad01", now)) }
     @Test fun rejectsEmptyIdentity() { assertFalse(AlertEventValidator.accepts(alert.copy(userId = ""), "comunidad01", now)) }
+
+    @Test
+    fun acceptsSubjectAndPreservesCompatibilityWithLegacyEvents() {
+        assertTrue(AlertEventValidator.accepts(alert, "comunidad01", now))
+        assertTrue(AlertEventValidator.accepts(alert.copy(subject = "Portón bloqueado"), "comunidad01", now))
+    }
+
+    @Test
+    fun rejectsOversizedAndMultilineSubjects() {
+        val invalidSubjects = listOf("x".repeat(AlertFactory.MAX_DESCRIPTION_LENGTH + 1), "Portón\nbloqueado")
+        for (subject in invalidSubjects) {
+            assertFalse(AlertEventValidator.accepts(alert.copy(subject = subject), "comunidad01", now))
+        }
+    }
 }

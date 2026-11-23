@@ -48,7 +48,11 @@ class MqttAlertClient(
                         data.getString("userId"),
                         data.getString("name"),
                         data.getString("home"),
-                        data.getLong("createdAt")
+                        data.getLong("createdAt"),
+                        subject = if (data.has("subject")) {
+                            require(data.get("subject") is String)
+                            data.getString("subject")
+                        } else ""
                     )
                     require(data.getString("status") == "ACTIVE")
                     if (!AlertEventValidator.accepts(
@@ -93,6 +97,7 @@ class MqttAlertClient(
             .put("userId", alert.userId)
             .put("name", alert.name).put("home", alert.home).put("createdAt", alert.createdAt)
             .put("status", "ACTIVE")
+        if (alert.subject.isNotEmpty()) json.put("subject", alert.subject)
         runCatching {
             client.publish(
                 topic,

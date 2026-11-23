@@ -19,7 +19,8 @@ data class Resident(
 data class CommunityAlert(
     val id: String, val communityId: String, val userId: String,
     val name: String, val home: String, val createdAt: Long,
-    val status: AlertStatus = AlertStatus.ACTIVE
+    val status: AlertStatus = AlertStatus.ACTIVE,
+    val subject: String = ""
 )
 
 object RegistrationValidator {
@@ -45,7 +46,11 @@ object RegistrationValidator {
 }
 
 object AlertFactory {
-    fun create(resident: Resident, now: Long): CommunityAlert {
+    const val MAX_DESCRIPTION_LENGTH = 240
+
+    fun create(resident: Resident, now: Long, subject: String = ""): CommunityAlert {
+        val normalizedSubject = subject.trim()
+        require(normalizedSubject.length <= MAX_DESCRIPTION_LENGTH && normalizedSubject.none { it.isISOControl() })
         require(resident.uid.isNotBlank() && resident.communityId.isNotBlank())
         require(resident.name.isNotBlank() && resident.home.isNotBlank() && now > 0)
         return CommunityAlert(
@@ -54,7 +59,8 @@ object AlertFactory {
             resident.uid,
             resident.name,
             resident.home,
-            now
+            now,
+            subject = normalizedSubject
         )
     }
 }

@@ -367,13 +367,13 @@ class CommunityViewModel(app: Application) : AndroidViewModel(app) {
         if (previous != null) viewModelScope.launch(Dispatchers.IO) { previous.close() }
     }
 
-    fun activateAlert() {
+    fun activateAlert(subject: String) {
         if (!state.value.delivery.canStartAnother()) return
         if (state.value.demo || !state.value.mqttConnected) {
             notice("Alerta sin enviar. Debes conectarte al servicio de alertas."); return
         }
         val user = state.value.resident ?: return
-        publish(AlertFactory.create(user, System.currentTimeMillis()))
+        publish(AlertFactory.create(user, System.currentTimeMillis(), subject))
     }
 
     fun retryAlert() {

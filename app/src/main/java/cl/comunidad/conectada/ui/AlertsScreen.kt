@@ -148,6 +148,7 @@ fun AlertsScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text("${alert.name} · #${alert.home}", fontWeight = FontWeight.SemiBold)
+                    if (alert.subject.isNotBlank()) Text(alert.subject)
                     Text(
                         formatTime(alert.createdAt),
                         style = MaterialTheme.typography.bodySmall,

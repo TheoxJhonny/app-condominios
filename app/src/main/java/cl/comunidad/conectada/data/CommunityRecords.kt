@@ -12,5 +12,6 @@ data class AlertRecord(
     val name: String = "",
     val home: String = "",
     val createdAt: Long = 0,
-    val status: String = "ACTIVE"
+    val status: String = "ACTIVE",
+    val subject: String = ""
 )

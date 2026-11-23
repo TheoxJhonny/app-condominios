@@ -59,10 +59,13 @@ object CommunityNotifications {
             intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
+        val sender = "${alert.name} · #${alert.home}"
+        val detail = alert.subject.ifBlank { "Ha solicitado ayuda." }
         val notification = Notification.Builder(context, "community-alerts")
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
-            .setContentTitle("Alerta comunitaria")
-            .setContentText("${alert.name} · #${alert.home} ha solicitado ayuda.")
+            .setContentTitle("Un vecino necesita ayuda")
+            .setContentText("$sender: $detail")
+            .setStyle(Notification.BigTextStyle().bigText("$sender\n$detail"))
             .setContentIntent(pending).setAutoCancel(true).build()
         runCatching { manager.notify(alert.id, 1, notification) }
     }

@@ -145,7 +145,7 @@ class FirebaseCommunityRepository(
             "id" to alert.id, "communityId" to alert.communityId, "userId" to alert.userId,
             "name" to alert.name, "home" to alert.home, "createdAt" to ServerValue.TIMESTAMP,
             "status" to "ACTIVE"
-        )
+        ) + if (alert.subject.isEmpty()) emptyMap() else mapOf("subject" to alert.subject)
         // Preserve original timestamp and administrator status when retrying the same event.
         suspendCancellableCoroutine<Unit> { continuation ->
             community(alert.communityId).child("alerts").child(alert.id)
