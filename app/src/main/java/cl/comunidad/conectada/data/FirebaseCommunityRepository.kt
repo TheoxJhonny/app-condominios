@@ -38,6 +38,10 @@ class FirebaseCommunityRepository(
         Announcement::class.java
     )
 
+    suspend fun announcement(link: AnnouncementLink): Announcement? =
+        community(link.communityId).child("announcements").child(link.id)
+            .get().await().getValue(Announcement::class.java)
+
     fun alerts(communityId: String): Flow<List<AlertRecord>> = observe(
         community(communityId).child("alerts").orderByChild("createdAt").limitToLast(30),
         AlertRecord::class.java
@@ -121,13 +125,15 @@ class FirebaseCommunityRepository(
         ).await()
     }
 
-    suspend fun publishAnnouncement(communityId: String, title: String, content: String) {
+    suspend fun publishAnnouncement(resident: Resident, title: String, content: String) {
+        require(resident.uid == uid())
         require(title.trim().length in 1..120 && content.trim().length in 1..5000)
         // Database rules enforce administrator claims. FCM must be sent by a trusted backend.
-        val ref = community(communityId).child("announcements").push()
+        val ref = community(resident.communityId).child("announcements").push()
         ref.setValue(
             mapOf(
-                "id" to ref.key, "userId" to uid(), "title" to title.trim(),
+                "id" to ref.key, "userId" to resident.uid, "title" to title.trim(),
+                "authorName" to resident.name,
                 "content" to content.trim(), "createdAt" to ServerValue.TIMESTAMP
             )
         ).await()

@@ -2,7 +2,7 @@ package cl.comunidad.conectada.data
 
 data class Announcement(
     val id: String = "", val userId: String = "", val title: String = "",
-    val content: String = "", val createdAt: Long = 0
+    val content: String = "", val createdAt: Long = 0, val authorName: String = ""
 )
 
 data class AlertRecord(

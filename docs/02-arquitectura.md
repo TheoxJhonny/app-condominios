@@ -8,7 +8,7 @@
 | Realtime Database | Perfiles, chat, avisos e historial |
 | Cliente Paho y broker MQTT | Envío y recepción en vivo por comunidad mediante TLS |
 | Android | Notificaciones locales de alertas y apertura de la pantalla Alertas |
-| Emisor FCM | Notificación de avisos. Pendiente |
+| Emisor FCM | Cloud Function que recibe el evento de creación de un aviso y avisa a instalaciones registradas de miembros vigentes |
 
 ## Datos y pertenencia
 

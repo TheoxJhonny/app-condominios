@@ -12,7 +12,7 @@ NeighborLoop reúne el chat vecinal, los avisos de administración y las alertas
 - Inicio con galería de fotografías referenciales, avisos recientes y accesos rápidos. La galería requiere Internet.
 - Modo demostración con datos locales de ejemplo, sin cuentas reales ni envío de alertas.
 
-El acceso con Google, la persistencia del perfil, el chat y el envío y la recepción de alertas se probaron entre un teléfono y un emulador. Quedan pendientes las notificaciones de avisos mediante FCM y la validación de permisos y del cierre de alertas entre dispositivos.
+El acceso con Google, la persistencia del perfil, el chat y el envío y la recepción de alertas se probaron entre un teléfono y un emulador. El código de las notificaciones de avisos mediante FCM está integrado. Quedan pendientes el despliegue de las reglas y la función, la prueba de FCM con dos dispositivos y la validación de permisos y cierre de alertas.
 
 ## Ejecutar en Android Studio
 

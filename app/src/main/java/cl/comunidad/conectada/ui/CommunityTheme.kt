@@ -13,15 +13,19 @@ val Paper = Color(0xFFF5F2E9)
 val Cobalt = Color(0xFF2239D7)
 val CobaltWash = Color(0xFFE5E9FC)
 val Muted = Color(0xFF56584F)
+val SignalOrange = Color(0xFFBE4200)
 val Rule = Color(0xFFCDC9BD)
 val AlertRed = Color(0xFFB12D3D)
 
-private val Square = RoundedCornerShape(0.dp)
+internal val Square = RoundedCornerShape(0.dp)
 private val EditorialTypography = Typography().run {
     copy(
         displaySmall = displaySmall.copy(fontWeight = FontWeight.Bold, letterSpacing = (-1.2).sp),
         headlineLarge = headlineLarge.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.8).sp),
-        headlineMedium = headlineMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.6).sp),
+        headlineMedium = headlineMedium.copy(
+            fontWeight = FontWeight.Bold,
+            letterSpacing = (-0.6).sp
+        ),
         titleLarge = titleLarge.copy(fontWeight = FontWeight.Bold),
         labelSmall = labelSmall.copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.4.sp)
     )
@@ -39,7 +43,11 @@ fun CommunityTheme(content: @Composable () -> Unit) {
             outline = Muted, outlineVariant = Rule, error = AlertRed
         ),
         shapes = Shapes(
-            extraSmall = Square, small = Square, medium = Square, large = Square, extraLarge = Square
+            extraSmall = Square,
+            small = Square,
+            medium = Square,
+            large = Square,
+            extraLarge = Square
         ),
         typography = EditorialTypography,
         content = content

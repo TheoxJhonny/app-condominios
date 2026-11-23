@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -16,39 +17,101 @@ import androidx.compose.ui.unit.dp
 import cl.comunidad.conectada.domain.*
 
 @Composable
-fun AlertsScreen(state: CommunityState, model: CommunityViewModel, onAlert: () -> Unit, onNotificationPermission: () -> Unit) {
+fun AlertsScreen(
+    state: CommunityState,
+    model: CommunityViewModel,
+    onAlert: () -> Unit,
+    onNotificationPermission: () -> Unit
+) {
     var showConnection by remember { mutableStateOf(false) }
-    LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    LazyColumn(
+        contentPadding = PaddingValues(20.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp)
+    ) {
         item { Text("Alertas comunitarias", style = MaterialTheme.typography.headlineMedium) }
-        item { Surface(color = if (state.mqttConnected) CobaltWash else Color.White, shape = MaterialTheme.shapes.medium) {
-            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(if (state.mqttConnected) "● Servicio de alertas conectado" else if (state.mqttConnecting) "Conectando al servicio…" else "○ Servicio de alertas desconectado", fontWeight = FontWeight.SemiBold, color = if (state.mqttConnected) Cobalt else Muted)
-                Text("Las alertas en tiempo real se reciben con la aplicación abierta y conectada.", color = Muted)
-                val connectedOrConnecting = state.mqttConnected || state.mqttConnecting
-                OutlinedButton(
-                    onClick = {
-                        when {
-                            connectedOrConnecting -> model.disconnectMqtt()
-                            state.mqttConfigured -> model.reconnectMqtt()
-                            else -> showConnection = true
-                        }
-                    },
-                    enabled = !state.demo
+        item {
+            Surface(
+                color = if (state.mqttConnected) CobaltWash else Color.White,
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(when {
-                        connectedOrConnecting -> "Desconectar"
-                        state.mqttConfigured -> "Reconectar servicio"
-                        else -> "Conectar servicio"
-                    })
-                }
-                if (state.mqttConfigured && !connectedOrConnecting) {
-                    TextButton(onClick = { showConnection = true }) { Text("Cambiar credenciales") }
+                    val connectionLabel = when {
+                        state.mqttConnected -> "Servicio conectado"
+                        state.mqttConnecting -> "Conectando al servicio"
+                        else -> "Servicio desconectado"
+                    }
+                    val statusColor = when {
+                        state.mqttConnected -> Cobalt
+                        state.mqttConnecting -> SignalOrange
+                        else -> Muted
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Box(Modifier.size(9.dp).background(statusColor))
+                        Text(
+                            connectionLabel,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = statusColor
+                        )
+                    }
+                    if (state.mqttConnecting) {
+                        LinearProgressIndicator(Modifier.fillMaxWidth().height(3.dp))
+                    }
+                    Text(
+                        "Las alertas en tiempo real se reciben con la aplicación abierta y conectada.",
+                        color = Muted
+                    )
+                    val connectedOrConnecting = state.mqttConnected || state.mqttConnecting
+                    OutlinedButton(
+                        shape = Square,
+                        onClick = {
+                            when {
+                                connectedOrConnecting -> model.disconnectMqtt()
+                                state.mqttConfigured -> model.reconnectMqtt()
+                                else -> showConnection = true
+                            }
+                        },
+                        enabled = !state.demo
+                    ) {
+                        Text(
+                            when {
+                                connectedOrConnecting -> "Desconectar"
+                                state.mqttConfigured -> "Reconectar servicio"
+                                else -> "Conectar servicio"
+                            }
+                        )
+                    }
+                    if (state.mqttConfigured && !connectedOrConnecting) {
+                        TextButton(
+                            shape = Square,
+                            onClick = { showConnection = true }) { Text("Cambiar credenciales") }
+                    }
                 }
             }
-        } }
-        item { Button(onClick = onAlert, enabled = state.delivery.canStartAnother(), modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp), colors = ButtonDefaults.buttonColors(containerColor = AlertRed)) {
-            Icon(Icons.Default.Warning, null); Spacer(Modifier.width(12.dp)); Text("Solicitar ayuda a mis vecinos")
-        } }
+        }
+        item {
+            Button(
+                shape = Square,
+                onClick = onAlert,
+                enabled = state.delivery.canStartAnother(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 64.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = AlertRed)
+            ) {
+                Icon(
+                    Icons.Default.Warning,
+                    null
+                ); Spacer(Modifier.width(12.dp)); Text("Solicitar ayuda a mis vecinos")
+            }
+        }
         item {
             val deliveryText = when (val delivery = state.delivery) {
                 AlertDelivery.Idle -> "Se solicitará confirmación antes de activar una alerta."
@@ -58,24 +121,62 @@ fun AlertsScreen(state: CommunityState, model: CommunityViewModel, onAlert: () -
                 is AlertDelivery.Failed -> if (delivery.brokerAcknowledged) "Publicada al broker. El historial está pendiente de registro." else "No se pudo confirmar el envío. Reintenta con el mismo identificador."
             }
             Text(deliveryText, style = MaterialTheme.typography.bodySmall, color = Muted)
-            if (state.delivery is AlertDelivery.Failed) TextButton(onClick = model::retryAlert) { Text("Reintentar operación pendiente") }
+            if (state.delivery is AlertDelivery.Failed) TextButton(
+                shape = Square,
+                onClick = model::retryAlert
+            ) { Text("Reintentar operación pendiente") }
         }
-        item { TextButton(onClick = onNotificationPermission) { Text("Habilitar notificaciones en este dispositivo") } }
-        item { Text("Historial de la comunidad", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
-        if (state.alerts.isEmpty()) item { EmptyState("Sin alertas registradas", "El historial mostrará quién solicitó ayuda y el estado de atención.") }
-        items(state.alerts, key = { it.id }) { alert -> Surface(color = Color.White, shape = MaterialTheme.shapes.medium) {
-            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("${alert.name} · #${alert.home}", fontWeight = FontWeight.SemiBold)
-                Text(formatTime(alert.createdAt), style = MaterialTheme.typography.bodySmall, color = Muted)
-                Text(when (alert.status) { "ACTIVE" -> "Activa"; "ACKNOWLEDGED" -> "Atendida"; "CLOSED" -> "Cerrada"; else -> "Estado no reconocido" }, color = if (alert.status == "ACTIVE") AlertRed else Ink)
-                if (state.resident?.role == Role.ADMIN && alert.status != "CLOSED") Row {
-                    if (alert.status == "ACTIVE") TextButton(onClick = { model.updateAlert(alert.id, AlertStatus.ACKNOWLEDGED) }, enabled = !state.busy) { Text("Marcar atendida") }
-                    TextButton(onClick = { model.updateAlert(alert.id, AlertStatus.CLOSED) }, enabled = !state.busy) { Text("Cerrar") }
+        item {
+            TextButton(
+                shape = Square,
+                onClick = onNotificationPermission
+            ) { Text("Habilitar notificaciones en este dispositivo") }
+        }
+        item { SectionHeading("Historial de la comunidad") }
+        if (state.alerts.isEmpty()) item {
+            EmptyState(
+                "Sin alertas registradas",
+                "El historial mostrará quién solicitó ayuda y el estado de atención."
+            )
+        }
+        items(state.alerts, key = { it.id }) { alert ->
+            Surface(color = Color.White, shape = MaterialTheme.shapes.medium) {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text("${alert.name} · #${alert.home}", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        formatTime(alert.createdAt),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Muted
+                    )
+                    Text(
+                        when (alert.status) {
+                            "ACTIVE" -> "Activa"; "ACKNOWLEDGED" -> "Atendida"; "CLOSED" -> "Cerrada"; else -> "Estado no reconocido"
+                        }, color = if (alert.status == "ACTIVE") AlertRed else Ink
+                    )
+                    if (state.resident?.role == Role.ADMIN && alert.status != "CLOSED") Row {
+                        if (alert.status == "ACTIVE") TextButton(
+                            shape = Square,
+                            onClick = { model.updateAlert(alert.id, AlertStatus.ACKNOWLEDGED) },
+                            enabled = !state.busy
+                        ) { Text("Marcar atendida") }
+                        TextButton(
+                            shape = Square,
+                            onClick = { model.updateAlert(alert.id, AlertStatus.CLOSED) },
+                            enabled = !state.busy
+                        ) { Text("Cerrar") }
+                    }
                 }
             }
-        } }
+        }
     }
-    if (showConnection) ConnectionDialog(onDismiss = { showConnection = false }) { host, username, password ->
+    if (showConnection) ConnectionDialog(onDismiss = {
+        showConnection = false
+    }) { host, username, password ->
         model.connectMqtt(host, username, password)
         showConnection = false
     }
@@ -86,13 +187,47 @@ private fun ConnectionDialog(onDismiss: () -> Unit, onConnect: (String, String, 
     var host by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    AlertDialog(onDismissRequest = onDismiss, title = { Text("Conectar alertas") }, text = {
-        Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Usa las credenciales asignadas por administración. Conexión segura TLS. Las credenciales se conservan en memoria durante esta sesión.", style = MaterialTheme.typography.bodySmall)
-            OutlinedTextField(host, { host = it }, label = { Text("Host del broker") }, placeholder = { Text("broker.ejemplo.cl") }, singleLine = true)
-            OutlinedTextField(username, { username = it }, label = { Text("Usuario") }, singleLine = true)
-            OutlinedTextField(password, { password = it }, label = { Text("Contraseña") }, singleLine = true, visualTransformation = PasswordVisualTransformation())
-        }
-    }, confirmButton = { TextButton(onClick = { onConnect(host, username, password); password = "" }, enabled = host.isNotBlank() && username.isNotBlank() && password.isNotEmpty()) { Text("Conectar") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } })
+    AlertDialog(
+        shape = Square,
+        onDismissRequest = onDismiss,
+        title = { Text("Conectar alertas") },
+        text = {
+            Column(
+                Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    "Usa las credenciales asignadas por administración. Conexión segura TLS. Las credenciales se conservan en memoria durante esta sesión.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                OutlinedTextField(
+                    host,
+                    { host = it },
+                    label = { Text("Host del broker") },
+                    placeholder = { Text("broker.ejemplo.cl") },
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    username,
+                    { username = it },
+                    label = { Text("Usuario") },
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    password,
+                    { password = it },
+                    label = { Text("Contraseña") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                shape = Square,
+                onClick = { onConnect(host, username, password); password = "" },
+                enabled = host.isNotBlank() && username.isNotBlank() && password.isNotEmpty()
+            ) { Text("Conectar") }
+        },
+        dismissButton = { TextButton(shape = Square, onClick = onDismiss) { Text("Cancelar") } })
 }

@@ -105,13 +105,14 @@ class MqttAlertClient(
         }.onFailure(onError)
     }
 
-    private fun listener(success: () -> Unit, affectsConnection: Boolean = true) = object : IMqttActionListener {
-        override fun onSuccess(asyncActionToken: IMqttToken?) = success()
-        override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
-            if (affectsConnection) onConnection(false)
-            onError(exception ?: IllegalStateException("Operación MQTT fallida."))
+    private fun listener(success: () -> Unit, affectsConnection: Boolean = true) =
+        object : IMqttActionListener {
+            override fun onSuccess(asyncActionToken: IMqttToken?) = success()
+            override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
+                if (affectsConnection) onConnection(false)
+                onError(exception ?: IllegalStateException("Operación MQTT fallida."))
+            }
         }
-    }
 
     override fun close() {
         // Invoke off the main thread: disconnectForcibly may wait for the transport.

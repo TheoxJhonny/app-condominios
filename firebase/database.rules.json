@@ -2,6 +2,16 @@
   "rules": {
     ".read": false,
     ".write": false,
+    "announcementDevices": {
+      "$communityId": {
+        "$uid": {
+          "$installation": {
+            ".write": "auth != null && auth.uid === $uid && (!newData.exists() || auth.token.communityId === $communityId)",
+            ".validate": "$installation.matches(/^[A-Za-z0-9_-]{1,64}$/) && newData.isString() && newData.val().length >= 1 && newData.val().length <= 4096"
+          }
+        }
+      }
+    },
     "profiles": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
@@ -66,6 +76,9 @@
             },
             "createdAt": {
               ".validate": "data.exists() ? newData.val() === data.val() : (newData.isNumber() && newData.val() === now)"
+            },
+            "authorName": {
+              ".validate": "newData.isString() && newData.val() === root.child('profiles').child(auth.uid).child('name').val()"
             },
             "title": {
               ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120"
